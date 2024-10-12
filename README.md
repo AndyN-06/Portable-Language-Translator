@@ -7,6 +7,7 @@
 aws configure
 ```
 enter in AWS keys and us-east-2 for region
+
 4. run:
 ```bash
 pip install boto3
