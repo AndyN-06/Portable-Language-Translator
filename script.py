@@ -23,7 +23,7 @@ def text_to_speech(text, file_name='speech.mp3'):
     print(f'Audio saved as {file_name}')  # Print a message indicating that the audio file has been saved.
 
 # Example usage of the text_to_speech function
-text = "Hello, this is a test of AWS Polly."  # The text you want to convert to speech.
+text = "Me llamo Andy. A mi me gusta leche y agua."  # The text you want to convert to speech.
 text_to_speech(text)  # Call the function to convert the text to speech and save it as an MP3 file.
 
 # Optional: Play the audio file using an OS command (this command is for Windows)
