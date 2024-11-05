@@ -1,54 +1,28 @@
-import re
-from autocorrect import Speller
-from wordsegment import load, segment
-from nltk.corpus import words
+import os
+import logging
+import warnings
 
-# Load English words from nltk and the wordsegment module
-load()
-nltk_words = set(words.words())  # Load a list of valid English words
+# Suppress TensorFlow info and warning messages
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-# Initialize autocorrect spell checker
-spell_autocorrect = Speller()
+# Suppress warnings from Hugging Face Transformers library
+logging.getLogger("transformers").setLevel(logging.ERROR)
 
-# Function to reduce repetitions but only for invalid words
-def reduce_repetitions(text, max_repeats=1):
-    def reduce_word_repetitions(word):
-        # Reduce repeated characters in each word
-        reduced_word = re.sub(r'(.)\1+', lambda m: m.group(1) * max_repeats, word)
-        
-        # If the reduced word is valid, return it, else return the original word
-        if reduced_word in nltk_words:
-            return reduced_word
-        else:
-            return word  # Preserve the original if reducing it breaks the word
-        
-    # Split the text into words
-    words = re.findall(r'\w+', text)
-    
-    # Reduce repetitions word by word
-    return ' '.join(reduce_word_repetitions(word) for word in words)
+# Suppress all other warnings (including deprecation warnings)
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-# Function to segment and correct the final sentence
-def correct_sentence(input_string):
-    # Step 1: Segment the concatenated string into words
-    segmented_words = segment(input_string)
+from transformers import pipeline
 
-    # Step 2: Reduce repetitions (only for invalid words)
-    reduced_words = [reduce_repetitions(word) for word in segmented_words]
+# Load a pre-trained grammar correction model
+corrector = pipeline("text2text-generation", model="oliverguhr/spelling-correction-english-base")
 
-    # Step 3: Correct the words using autocorrect
-    corrected_words = [spell_autocorrect(word) for word in reduced_words]
+# Input sentence with spelling errors
+text = "Hi my nameis yohan"
 
-    # Step 4: Join corrected words into a sentence
-    return " ".join(corrected_words)
-
-# Test examples
-test_string1 = "GOODJOBTODAY"
-test_string2 = "IILLOOVVEEYYOOUU"
-test_string3 = "GGGOOODDDWWOOOOOOD"
-
-print(correct_sentence(test_string1))  # Output: "good job today"
-print(correct_sentence(test_string2))  # Output: "I love you"
-print(correct_sentence(test_string3))  # Output: "good wood"
+# Generate correction
+result = result = corrector(text, max_new_tokens=10)
 
 
+# Print the corrected text
+print(result[0]['generated_text'])  # This should output: "Hi, my name is Yohan."

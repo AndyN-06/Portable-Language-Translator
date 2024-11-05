@@ -44,8 +44,9 @@ def main():
         keypoint_classifier_labels = [row[0] for row in keypoint_classifier_labels]
 
     detected_string = ""  # To store the detected letters
-    word_list = []         # To store the list of words
-
+    word_list = ""  # To store the list of words
+    
+    
     # Variables for letter addition logic
     current_letter = None          # Currently detected letter
     letter_start_time = None       # Time when the current letter started being detected
@@ -119,7 +120,7 @@ def main():
         # Check if 5 seconds have passed since the last letter was added
         if detected_string and (current_time - last_added_time > 5):
             # Append the detected string as a new word to the word list
-            word_list.append(detected_string)
+            word_list += detected_string + " "
             print(f"New Word Added: {detected_string}")
             print(f"Word List: {word_list}")
             detected_string = ""  # Clear the detected string
@@ -143,7 +144,7 @@ def main():
 
         cv.putText(
             debug_image,
-            f"Word List: {' '.join(word_list)}",
+            f"Word List: {word_list}",
             (10, 110),
             cv.FONT_HERSHEY_SIMPLEX,
             0.7,
@@ -159,23 +160,6 @@ def main():
         key = cv.waitKey(10)
         if key == 27:  # ESC key
             break
-
-        # Send the string to the spell checker and correct repetitions when 'd' is pressed
-        if key == ord('d'):
-            if detected_string:
-                # Remove letters that only appear once
-                filtered_string = remove_single_occurrences(detected_string)
-
-                # Send the filtered string to the autocorrect function
-                corrected_sentence = decipher_with_autocorrect(filtered_string)
-                
-                # Print both the unprocessed string and the processed string
-                print(f"Unprocessed String: {detected_string}")
-                print(f"Filtered String (before autocorrect): {filtered_string}")
-                print(f"Processed String: {corrected_sentence}")
-                
-                # Clear the string after processing
-                detected_string = ""
 
     cap.release()
     cv.destroyAllWindows()
@@ -291,8 +275,3 @@ def draw_info_text(image, handedness_label, hand_sign_text):
 
 if __name__ == "__main__":
     main()
-
-
-# Utility functions for the previous version (commented out)
-# You can remove these if they are no longer needed
-# ...
