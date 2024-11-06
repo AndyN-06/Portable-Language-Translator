@@ -45,6 +45,7 @@ def main():
 
     detected_string = ""  # To store the detected letters
     word_list = []         # To store the list of words
+    full_sentence = ""    # To store the full sentence
 
     # Variables for letter addition logic
     current_letter = None          # Currently detected letter
@@ -120,8 +121,10 @@ def main():
         if detected_string and (current_time - last_added_time > 5):
             # Append the detected string as a new word to the word list
             word_list.append(detected_string)
+            full_sentence = ' '.join(word_list)
             print(f"New Word Added: {detected_string}")
             print(f"Word List: {word_list}")
+            print(f"Full Sentence: {full_sentence}")
             detected_string = ""  # Clear the detected string
             last_word_time = current_time
 
@@ -145,6 +148,17 @@ def main():
             debug_image,
             f"Word List: {' '.join(word_list)}",
             (10, 110),
+            cv.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            (255, 255, 255),
+            2,
+            cv.LINE_AA,
+        )
+
+        cv.putText(
+            debug_image,
+            f"Full Sentence: {full_sentence}",
+            (10, 150),
             cv.FONT_HERSHEY_SIMPLEX,
             0.7,
             (255, 255, 255),
