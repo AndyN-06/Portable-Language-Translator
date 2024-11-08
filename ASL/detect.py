@@ -119,7 +119,7 @@ def main():
             pass
 
         # Check if 3 seconds have passed since the last letter was added
-        if detected_string and (current_time - last_added_time > 3) and (current_time - last_added_time < 6):
+        if detected_string and (current_time - last_added_time > 3) and (current_time - last_added_time < 8):
             # Append the detected string as a new word to the word list
             word_list.append(detected_string)
             full_sentence = ' '.join(word_list)
@@ -128,7 +128,7 @@ def main():
             detected_string = ""  # Clear the detected string
             last_word_time = current_time
 
-        if full_sentence and (current_time - last_added_time > 6):
+        if full_sentence and (current_time - last_added_time > 8):
             display_sentence = full_sentence
             print(f"Final sentence: {display_sentence}")
             full_sentence = ""
