@@ -44,16 +44,19 @@ def main():
         keypoint_classifier_labels = [row[0] for row in keypoint_classifier_labels]
 
     detected_string = ""  # To store the detected letters
-    word_list = ""  # To store the list of words
-    
-    
+    word_list = ""        # To store the list of words
+
     # Variables for letter addition logic
-    current_letter = None          # Currently detected letter
-    letter_start_time = None       # Time when the current letter started being detected
-    last_added_time = 0            # Time when the last letter was added to the string
+    current_letter = None
+    letter_start_time = None
+    last_added_time = 0
 
     # Variables for word separation logic
-    last_word_time = time.time()   # Time when the last word was added
+    last_word_time = time.time()
+    last_letter_detected_time = time.time()
+
+    # New variable to track when detected_string becomes empty
+    empty_string_start_time = None
 
     while True:
         # Capture frame from the camera
@@ -117,8 +120,59 @@ def main():
             # No hand detected; optional: handle if needed
             pass
 
+        # After processing the current frame and detecting letters
+        current_time = time.time()
+
+        if detected_letter:
+            # Letter detected
+            if current_letter == detected_letter:
+                # Same letter detected, continue counting
+                pass
+            else:
+                # Different letter detected
+                current_letter = detected_letter
+                letter_start_time = current_time
+            # Reset the timer since a letter is being detected
+            last_letter_detected_time = current_time
+
+            # Since a letter is detected, reset the empty string timer
+            empty_string_start_time = None
+        else:
+            # No letter detected
+            if detected_string:
+                # If there is a detected string, handle word separation
+                if (current_time - last_letter_detected_time > 2):
+                    # Append the detected string as a new word to the word list
+                    word_list += detected_string + " "
+                    print(f"New Word Added: {detected_string}")
+                    print(f"Word List: {word_list}")
+                    detected_string = ""  # Clear the detected string
+                    last_letter_detected_time = current_time  # Reset the timer
+            else:
+                # detected_string is already empty
+                if empty_string_start_time is None:
+                    # Start the timer since detected_string is empty
+                    empty_string_start_time = current_time
+                elif (current_time - empty_string_start_time > 3):
+                    # 3 seconds have passed with detected_string empty
+                    if word_list:
+                        print(f"Final Word List: {word_list}")
+                        
+                    else:
+                        print("No words detected.")
+
+                    # Reset everything
+                    detected_string = ""
+                    word_list = ""
+                    empty_string_start_time = None
+                    current_letter = None
+                    letter_start_time = None
+                    last_added_time = current_time
+                    last_word_time = current_time
+                    last_letter_detected_time = current_time
+
         # Check if 5 seconds have passed since the last letter was added
-        if detected_string and (current_time - last_added_time > 5):
+        if detected_string and (current_time - last_added_time > 2):
             # Append the detected string as a new word to the word list
             word_list += detected_string + " "
             print(f"New Word Added: {detected_string}")
@@ -163,33 +217,6 @@ def main():
 
     cap.release()
     cv.destroyAllWindows()
-
-
-# Function to remove letters that appear only once
-def remove_single_occurrences(text):
-    # Count occurrences of each letter
-    letter_count = Counter(text)
-
-    # Create a new string, including only letters that appear more than once
-    filtered_text = ''.join([char for char in text if letter_count[char] > 1])
-
-    return filtered_text
-
-
-# Reduce repetitions of characters and correct the sentence with autocorrect
-def reduce_repetitions(text, max_repeats=2):
-    # Use regex to reduce repetitions of characters to a maximum of `max_repeats`
-    return re.sub(r'(.)\1+', lambda m: m.group(1) * max_repeats, text)
-
-def decipher_with_autocorrect(text):
-    # Reduce repetitions to make it easier to decipher
-    reduced_text = reduce_repetitions(text)
-    
-    # Correct the sentence using the autocorrect library
-    corrected_sentence = spell(reduced_text)
-    
-    return corrected_sentence
-
 
 # Calculate the hand landmarks' coordinates from MediaPipe results
 def calc_landmark_list(image, landmarks):
