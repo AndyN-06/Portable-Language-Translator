@@ -21,7 +21,8 @@ def correct_text(text):
     return ' '.join(corrected_words)
 
 # Test the function
-text = "Hello nmy nmamee is Yohan"
+text = "HI MY NMAME ISS"
+text = text.lower()
 corrected = correct_text(text)
 print(f"Original: {text}")
 print(f"Corrected: {corrected}")

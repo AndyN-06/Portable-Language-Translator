@@ -5,13 +5,31 @@ import copy
 import numpy as np
 import re
 import time  # Import time for controlling letter addition frequency and word separation
-from autocorrect import Speller  # Import autocorrect
 from collections import Counter  # Import for counting occurrences of letters
 
 from model.keypoint_classifier.keypoint_classifier import KeyPointClassifier
 
-# Initialize the autocorrect spell checker
-spell = Speller()
+from spellchecker import SpellChecker
+
+def correct_text(text):
+    spell = SpellChecker()
+    
+    # Split into words
+    words = text.split()
+    
+    # Find misspelled words
+    misspelled = spell.unknown(words)
+    
+    # Replace misspelled words with corrections
+    corrected_words = []
+    for word in words:
+        if word in misspelled:
+            corrected_words.append(spell.correction(word))
+        else:
+            corrected_words.append(word)
+    
+    # Join back into text
+    return ' '.join(corrected_words)
 
 def main():
     # Camera preparation ###############################################################
@@ -156,8 +174,10 @@ def main():
                 elif (current_time - empty_string_start_time > 3):
                     # 3 seconds have passed with detected_string empty
                     if word_list:
-                        print(f"Final Word List: {word_list}")
-                        
+                        word_list = word_list.lower()
+                        corrected_word_list = correct_text(word_list)
+                        print(corrected_word_list)
+                        print(f"Final Word List: {corrected_word_list}")
                     else:
                         print("No words detected.")
 
