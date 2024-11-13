@@ -1,3 +1,12 @@
+import os
+import logging
+
+# Suppress TensorFlow warnings
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+# Suppress additional TensorFlow and related library warnings
+logging.getLogger('tensorflow').setLevel(logging.ERROR)
+
 import cv2 as cv
 import mediapipe as mp
 import csv
@@ -9,27 +18,7 @@ from collections import Counter  # Import for counting occurrences of letters
 
 from model.keypoint_classifier.keypoint_classifier import KeyPointClassifier
 
-from spellchecker import SpellChecker
-
-def correct_text(text):
-    spell = SpellChecker()
-    
-    # Split into words
-    words = text.split()
-    
-    # Find misspelled words
-    misspelled = spell.unknown(words)
-    
-    # Replace misspelled words with corrections
-    corrected_words = []
-    for word in words:
-        if word in misspelled:
-            corrected_words.append(spell.correction(word))
-        else:
-            corrected_words.append(word)
-    
-    # Join back into text
-    return ' '.join(corrected_words)
+from autocorrect import correct_sentence
 
 def main():
     # Camera preparation ###############################################################
@@ -175,9 +164,9 @@ def main():
                     # 3 seconds have passed with detected_string empty
                     if word_list:
                         word_list = word_list.lower()
-                        corrected_word_list = correct_text(word_list)
+                        corrected_word_list = correct_sentence(word_list)
                         print(corrected_word_list)
-                        print(f"Final Word List: {corrected_word_list}")
+                        print(f"Final and corrected word list: {corrected_word_list}")
                     else:
                         print("No words detected.")
 
