@@ -11,6 +11,8 @@ from model.keypoint_classifier.keypoint_classifier import KeyPointClassifier
 
 from spellchecker import SpellChecker
 
+from autotest import load_model, fix_text
+
 def correct_text(text):
     spell = SpellChecker()
     
@@ -32,6 +34,8 @@ def correct_text(text):
     return ' '.join(corrected_words)
 
 def main():
+    tokenizer, model, device = load_model()
+    
     # Camera preparation ###############################################################
     cap_device = 0  # Default camera
     cap_width = 960
@@ -175,6 +179,7 @@ def main():
                     # 3 seconds have passed with detected_string empty
                     if word_list:
                         word_list = word_list.lower()
+                        
                         corrected_word_list = correct_text(word_list)
                         print(corrected_word_list)
                         print(f"Final Word List: {corrected_word_list}")
