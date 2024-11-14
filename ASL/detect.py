@@ -18,10 +18,7 @@ from collections import Counter  # Import for counting occurrences of letters
 
 from model.keypoint_classifier.keypoint_classifier import KeyPointClassifier
 
-from autocorrect import correct_sentence
-
 def main():
-    tokenizer, model, device = load_model()
     
     # Camera preparation ###############################################################
     cap_device = 0  # Default camera
@@ -166,9 +163,9 @@ def main():
                     # 3 seconds have passed with detected_string empty
                     if word_list:
                         word_list = word_list.lower()
-                        corrected_word_list = correct_sentence(word_list)
-                        print(corrected_word_list)
-                        print(f"Final and corrected word list: {corrected_word_list}")
+                        # corrected_word_list = correct_sentence(word_list)
+                        # print(corrected_word_list)
+                        print(f"Final and corrected word list: {word_list}")
                     else:
                         print("No words detected.")
 
