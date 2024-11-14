@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import logging
 
@@ -19,10 +20,9 @@ from collections import Counter  # Import for counting occurrences of letters
 from model.keypoint_classifier.keypoint_classifier import KeyPointClassifier
 
 from autocorrect import correct_sentence
+import io  # Added for Python 2.7 compatibility with encoding
 
 def main():
-    tokenizer, model, device = load_model()
-    
     # Camera preparation ###############################################################
     cap_device = 0  # Default camera
     cap_width = 960
@@ -46,7 +46,7 @@ def main():
     keypoint_classifier = KeyPointClassifier()
 
     # Load gesture labels (ASL A-Z) ####################################################
-    with open(
+    with io.open(
         "model/keypoint_classifier/keypoint_classifier_label.csv", encoding="utf-8-sig"
     ) as f:
         keypoint_classifier_labels = csv.reader(f)
@@ -114,8 +114,8 @@ def main():
                     elif current_time - letter_start_time >= 0.75:
                         # Letter has been stable for at least 0.75 seconds
                         detected_string += detected_letter
-                        print(f"Letter Added: {detected_letter}")
-                        print(f"Detected String: {detected_string}")
+                        print("Letter Added: {}".format(detected_letter))
+                        print("Detected String: {}".format(detected_string))
                         last_added_time = current_time
                         # Reset for the next letter detection
                         current_letter = None
@@ -153,8 +153,8 @@ def main():
                 if (current_time - last_letter_detected_time > 2):
                     # Append the detected string as a new word to the word list
                     word_list += detected_string + " "
-                    print(f"New Word Added: {detected_string}")
-                    print(f"Word List: {word_list}")
+                    print("New Word Added: {}".format(detected_string))
+                    print("Word List: {}".format(word_list))
                     detected_string = ""  # Clear the detected string
                     last_letter_detected_time = current_time  # Reset the timer
             else:
@@ -168,7 +168,7 @@ def main():
                         word_list = word_list.lower()
                         corrected_word_list = correct_sentence(word_list)
                         print(corrected_word_list)
-                        print(f"Final and corrected word list: {corrected_word_list}")
+                        print("Final and corrected word list: {}".format(corrected_word_list))
                     else:
                         print("No words detected.")
 
@@ -186,8 +186,8 @@ def main():
         if detected_string and (current_time - last_added_time > 2):
             # Append the detected string as a new word to the word list
             word_list += detected_string + " "
-            print(f"New Word Added: {detected_string}")
-            print(f"Word List: {word_list}")
+            print("New Word Added: {}".format(detected_string))
+            print("Word List: {}".format(word_list))
             detected_string = ""  # Clear the detected string
             last_word_time = current_time
 
@@ -198,7 +198,7 @@ def main():
         # Optionally display the current detected string and word list
         cv.putText(
             debug_image,
-            f"Detected String: {detected_string}",
+            "Detected String: {}".format(detected_string),
             (10, 70),
             cv.FONT_HERSHEY_SIMPLEX,
             0.7,
@@ -209,7 +209,7 @@ def main():
 
         cv.putText(
             debug_image,
-            f"Word List: {word_list}",
+            "Word List: {}".format(word_list),
             (10, 110),
             cv.FONT_HERSHEY_SIMPLEX,
             0.7,
@@ -241,7 +241,6 @@ def calc_landmark_list(image, landmarks):
 
     return landmark_point
 
-
 # Pre-process the landmarks by converting them to relative and normalized coordinates
 def pre_process_landmark(landmark_list):
     temp_landmark_list = copy.deepcopy(landmark_list)
@@ -265,7 +264,6 @@ def pre_process_landmark(landmark_list):
 
     return temp_landmark_list
 
-
 # Draw bounding box around the hand
 def calc_bounding_rect(image, landmarks):
     image_width, image_height = image.shape[1], image.shape[0]
@@ -281,13 +279,11 @@ def calc_bounding_rect(image, landmarks):
     x, y, w, h = cv.boundingRect(landmark_array)
     return [x, y, x + w, y + h]
 
-
 # Draw landmarks on the hand
 def draw_landmarks(image, landmark_point):
     for index, landmark in enumerate(landmark_point):
         cv.circle(image, (landmark[0], landmark[1]), 5, (0, 255, 0), -1)
     return image
-
 
 # Draw bounding box around the hand
 def draw_bounding_rect(use_brect, image, brect):
@@ -295,12 +291,11 @@ def draw_bounding_rect(use_brect, image, brect):
         cv.rectangle(image, (brect[0], brect[1]), (brect[2], brect[3]), (0, 0, 255), 2)
     return image
 
-
 # Draw the detected hand (right/left) and the detected letter on the screen
 def draw_info_text(image, handedness_label, hand_sign_text):
     cv.putText(
         image,
-        f"Hand: {handedness_label}, Letter: {hand_sign_text}",
+        "Hand: {}, Letter: {}".format(handedness_label, hand_sign_text),
         (10, 30),
         cv.FONT_HERSHEY_SIMPLEX,
         1.0,
@@ -309,7 +304,6 @@ def draw_info_text(image, handedness_label, hand_sign_text):
         cv.LINE_AA,
     )
     return image
-
 
 if __name__ == "__main__":
     main()
