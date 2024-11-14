@@ -17,10 +17,10 @@ import time  # Import time for controlling letter addition frequency and word se
 from collections import Counter  # Import for counting occurrences of letters
 
 from model.keypoint_classifier.keypoint_classifier import KeyPointClassifier
-
 from autocorrect import correct_sentence
 
 def main():
+    
     # Camera preparation ###############################################################
     cap_device = 0  # Default camera
     cap_width = 960
@@ -165,7 +165,7 @@ def main():
                     if word_list:
                         word_list = word_list.lower()
                         corrected_word_list = correct_sentence(word_list)
-                        print(corrected_word_list)
+                        # print(corrected_word_list)
                         print(f"Final and corrected word list: {corrected_word_list}")
                     else:
                         print("No words detected.")
