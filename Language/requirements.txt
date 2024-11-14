@@ -6,3 +6,5 @@ google-cloud-translate
 webrtcvad
 pydub
 pynput
+flask
+flask-cors

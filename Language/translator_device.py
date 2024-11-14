@@ -2,23 +2,20 @@
 
 import os
 import io
-import wave
+import sys
+import threading
+import collections
 import numpy as np
 import sounddevice as sd
 from google.cloud import speech
 from google.cloud import texttospeech
 from google.cloud import translate_v2 as translate
-import webrtcvad  # VAD library
-import collections
-import sys
-import threading
-import time
+import webrtcvad  # Voice Activity Detection library
 from pydub import AudioSegment
 from pydub.playback import play
-from pynput import keyboard  # For detecting key presses
 
 # Set your environment variable for Google Cloud credentials
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'C:\\Users\\andre\\Desktop\\language-440220-e0110f2acfe7.json'
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'C:\\Users\\andre\\Desktop\\language-440220-e0110f2acfe7.json'  # Update this path
 
 class TranslatorDevice:
     def __init__(self):
@@ -32,14 +29,18 @@ class TranslatorDevice:
         self.vad = webrtcvad.Vad(self.VAD_MODE)
 
         # Language settings
-        self.base_language = 'en-US'  # User's base language
+        self.base_language = 'en-US'  # Default base language
+        self.supported_languages = ['en-US', 'es-US', 'ko-KR']  # Supported languages
         self.lang_combos = [
-            [self.base_language, 'es-ES'],  # English-Spanish
-            [self.base_language, 'ko-KR'],   # English-Korean
-            [self.base_language, 'en-US']
+            [self.base_language, 'es-US'],  # Base-Spanish
+            [self.base_language, 'ko-KR'],  # Base-Korean
+            [self.base_language, 'en-US']   # Base-English (self-translation)
         ]
-        self.mode_index = -1  # Index to keep track of the current language pair
-        self.mode = None  # Set initial mode to None
+        self.mode = None  # Initial mode
+
+        # Voice settings
+        self.gender = 'NEUTRAL'  # Default gender
+        self.voice_type = 'Standard'  # Default type
 
         # Lock for thread-safe operations
         self.language_lock = threading.Lock()
@@ -49,11 +50,6 @@ class TranslatorDevice:
         self.translate_client = translate.Client()
         self.tts_client = texttospeech.TextToSpeechClient()
 
-        # Key press handling
-        self.listener = None
-        self.switch_mode_key_pressed = False
-        self.reset_mode_key_pressed = False
-
     def read_audio_chunk(self, stream, frame_duration, sample_rate):
         """Read a chunk of audio from the stream."""
         n_frames = int(sample_rate * (frame_duration / 1000.0))
@@ -61,7 +57,7 @@ class TranslatorDevice:
             audio, _ = stream.read(n_frames)  # Unpack the tuple to get only the audio data
             return audio
         except Exception as e:
-            # print(f"Error reading audio: {e}")
+            print(f"Error reading audio: {e}")
             return None
 
     def vad_collector(self, sample_rate, frame_duration_ms, padding_duration_ms, stream):
@@ -70,7 +66,6 @@ class TranslatorDevice:
         ring_buffer = collections.deque(maxlen=num_padding_frames)
         triggered = False
         voiced_frames = []
-        # print("VAD collector started. Listening for voice activity...")
 
         while True:
             audio = self.read_audio_chunk(stream, frame_duration_ms, sample_rate)
@@ -82,7 +77,6 @@ class TranslatorDevice:
 
             if is_speech:
                 if not triggered:
-                    # print("Voice activity detected.")
                     triggered = True
                     voiced_frames.append(audio)
                 else:
@@ -92,7 +86,6 @@ class TranslatorDevice:
                 if triggered:
                     ring_buffer.append(audio)
                     if len(ring_buffer) >= ring_buffer.maxlen:
-                        # print("End of voice activity detected.")
                         # Concatenate voiced frames and yield
                         yield b''.join([f.tobytes() for f in voiced_frames])
                         # Reset for next utterance
@@ -104,21 +97,18 @@ class TranslatorDevice:
 
     def translate_text(self, text, target_language):
         """Translate the text to the target language using Google Cloud Translation API."""
-        # print(f"Translating text to {target_language}...")
         result = self.translate_client.translate(text, target_language=target_language)
         translated_text = result["translatedText"]
-        # print(f"Translated Text: {translated_text}")
         return translated_text
 
     def transcribe_and_translate(self, audio_bytes):
         """Transcribe the audio, detect language, set mode, translate, and synthesize the translated text."""
-        # print("Transcribing audio...")
         audio = speech.RecognitionAudio(content=audio_bytes)
         config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
             language_code=self.base_language,  # Base language
             sample_rate_hertz=self.SAMPLE_RATE,
-            alternative_language_codes=["es-ES", "ko-KR"]  # Additional languages
+            alternative_language_codes=[lang for lang in self.supported_languages if lang != self.base_language]
         )
 
         # Perform transcription
@@ -126,25 +116,22 @@ class TranslatorDevice:
 
         # Check if any results were returned
         if not response.results:
-            # print("No transcription results found.")
             return
 
         # Process transcription results
         full_transcript = ""
         for result in response.results:
-            # Each result is for a consecutive portion of the audio.
             alternative = result.alternatives[0]
             transcript = alternative.transcript
             full_transcript += transcript + " "
 
         full_transcript = full_transcript.strip()
-        # print(f"Transcription result: {full_transcript}")
+        print(f"Transcription result: {full_transcript}")
 
         # Detect language of the transcribed text
-        # print("Detecting language of the transcribed text...")
         detection = self.translate_client.detect_language(full_transcript)
         detected_language = detection['language']
-        # print(f"Detected language: {detected_language}")
+        print(f"Detected language: {detected_language}")
 
         with self.language_lock:
             # Check if mode is set or if detected language is neither base nor current target
@@ -158,9 +145,9 @@ class TranslatorDevice:
 
                 if found_pair:
                     self.mode = found_pair
-                    # print(f"Mode set to detected language pair: {self.mode}")
+                    print(f"Mode set to detected language pair: {self.mode}")
                 else:
-                    # print(f"No matching language pair found for detected language ({detected_language}) with base language.")
+                    print(f"No matching language pair found for detected language ({detected_language}) with base language.")
                     return  # Do nothing if no suitable language combo is found
 
             # Set the target language based on the current mode
@@ -169,7 +156,7 @@ class TranslatorDevice:
             else:
                 target_language = self.mode[0]
 
-            # print(f"Mode set to: {self.mode}")
+            print(f"Mode set to: {self.mode}")
 
         # Translate the text
         translated_text = self.translate_text(full_transcript, target_language[:2])
@@ -177,79 +164,92 @@ class TranslatorDevice:
         # Synthesize speech
         self.synthesize_speech(translated_text, target_language)
 
+    def get_voice_variant(self, language_code, ssml_gender):
+        """Get the voice variant letter based on language code and gender."""
+        # Map of available voice variants per language and gender
+        voice_variants = {
+            'en-US': {
+                texttospeech.SsmlVoiceGender.FEMALE: 'A',
+                texttospeech.SsmlVoiceGender.MALE: 'B',
+                texttospeech.SsmlVoiceGender.NEUTRAL: 'C',
+            },
+            'es-US': {
+                texttospeech.SsmlVoiceGender.FEMALE: 'A',
+                texttospeech.SsmlVoiceGender.MALE: 'B',
+                texttospeech.SsmlVoiceGender.NEUTRAL: 'C',
+            },
+            'ko-KR': {
+                texttospeech.SsmlVoiceGender.FEMALE: 'A',
+                texttospeech.SsmlVoiceGender.MALE: 'B',
+                texttospeech.SsmlVoiceGender.NEUTRAL: 'C',
+            },
+        }
+        variant = voice_variants.get(language_code, {}).get(ssml_gender)
+
+        if variant:
+            return variant
+        else:
+            # Fallback to a default variant if the specific gender is not available
+            print(f"No variant found for {language_code} with gender {ssml_gender}. Using default variant 'A'.")
+            return 'A'  # Default variant
+
     def synthesize_speech(self, text, target_language_code):
         """Convert text to speech and play the audio without saving to a file."""
-        # Select appropriate voice parameters
-        voice_params = {
-            "es": ("es-ES", texttospeech.SsmlVoiceGender.NEUTRAL),
-            "en": ("en-US", texttospeech.SsmlVoiceGender.NEUTRAL),
-            "ko": ("ko-KR", texttospeech.SsmlVoiceGender.NEUTRAL)
+        # Map gender string to SsmlVoiceGender
+        gender_map = {
+            'MALE': texttospeech.SsmlVoiceGender.MALE,
+            'FEMALE': texttospeech.SsmlVoiceGender.FEMALE,
+            'NEUTRAL': texttospeech.SsmlVoiceGender.NEUTRAL
         }
-        language_code, ssml_gender = voice_params.get(target_language_code[:2], ("en-US", texttospeech.SsmlVoiceGender.NEUTRAL))
+        ssml_gender = gender_map.get(self.gender, texttospeech.SsmlVoiceGender.NEUTRAL)
+
+        # Get the voice variant letter
+        variant = self.get_voice_variant(target_language_code, ssml_gender)
+
+        # Generate voice name
+        voice_name = f"{target_language_code}-{self.voice_type}-{variant}"
 
         # Configure the text input and voice parameters
         input_text = texttospeech.SynthesisInput(text=text)
         voice = texttospeech.VoiceSelectionParams(
-            language_code=language_code,
-            ssml_gender=ssml_gender
+            language_code=target_language_code,
+            name=voice_name
         )
         audio_config = texttospeech.AudioConfig(
             audio_encoding=texttospeech.AudioEncoding.LINEAR16  # LINEAR16 is WAV format
         )
 
-        # Generate the speech
-        # print("Synthesizing speech from text...")
-        response = self.tts_client.synthesize_speech(input=input_text, voice=voice, audio_config=audio_config)
+        try:
+            # Generate the speech
+            print(f"Synthesizing speech with voice: {voice_name}")
+            response = self.tts_client.synthesize_speech(input=input_text, voice=voice, audio_config=audio_config)
 
-        # Play the synthesized speech without saving to a file
-        # print("Playing the synthesized speech...")
-        audio_content = response.audio_content
-        audio_stream = io.BytesIO(audio_content)
-        audio_segment = AudioSegment.from_file(audio_stream, format="wav")
-        play(audio_segment)
-        # print("Playback finished.")
+            # Play the synthesized speech
+            audio_content = response.audio_content
+            audio_stream = io.BytesIO(audio_content)
+            audio_segment = AudioSegment.from_file(audio_stream, format="wav")
+            play(audio_segment)
+            print("Playback finished.")
+        except Exception as e:
+            print(f"Error during speech synthesis: {e}")
 
-    # def switch_mode(self):
-    #     """Switch to the next language mode."""
-    #     with self.language_lock:
-    #         self.mode_index = (self.mode_index + 1) % len(self.lang_combos)
-    #         self.mode = self.lang_combos[self.mode_index]
-    #         # print(f"Manually switched mode to: {self.mode}")
-
-    # def reset_mode(self):
-    #     """Reset to the original language mode."""
-    #     with self.language_lock:
-    #         self.mode_index = -1
-    #         self.mode = None
-    #         self.base_language = 'en-US'
-            # print("Reset to original mode: English as base language with autodetection.")
-
-    # def on_press(self, key):
-    #     """Handle key press events."""
-    #     try:
-    #         if key.char == 's':
-    #             # print("'s' key pressed. Switching language mode...")
-    #             self.switch_mode()
-    #         elif key.char == 'r':
-    #             # print("'r' key pressed. Resetting language mode...")
-    #             self.reset_mode()
-    #     except AttributeError:
-    #         pass  # Special keys (e.g., Ctrl, Alt) are ignored
-
-    # def start_key_listener(self):
-    #     """Start the key listener thread."""
-    #     self.listener = keyboard.Listener(on_press=self.on_press)
-    #     self.listener.start()
+    def set_settings(self, base_language, gender, voice_type):
+        with self.language_lock:
+            self.base_language = base_language
+            self.gender = gender
+            self.voice_type = voice_type
+            self.mode = None  # Reset mode
+            # Update language combinations based on the new base language
+            self.lang_combos = [
+                [self.base_language, lang] for lang in self.supported_languages if lang != self.base_language
+            ]
+            print(f"Settings updated: Base Language - {self.base_language}, Gender - {self.gender}, Type - {self.voice_type}")
 
     def start(self):
-        # print("Starting automatic translator. Press 's' to switch languages, 'r' to reset, or Ctrl+C to stop.")
-
-        # Start key listener
-        # self.start_key_listener()
-
+        print("Starting automatic translator device.")
         try:
             with sd.InputStream(samplerate=self.SAMPLE_RATE, channels=self.NUM_CHANNELS, dtype='int16') as stream:
-                # print("Audio input stream opened.")
+                print("Audio input stream opened.")
                 while True:
                     current_base_language = self.base_language  # Capture the current base language
                     print(f"\nListening for speech in: {current_base_language} (Mode: {self.mode})")
@@ -263,18 +263,16 @@ class TranslatorDevice:
                     )
 
                     for audio_data in frames_generator:
-                        # print("Processing captured voice data...")
+                        print("Processing captured voice data...")
 
                         # Transcribe, translate, and synthesize speech
                         self.transcribe_and_translate(audio_data)
 
-                        # Break if base_language changes during processing (due to key press)
+                        # Break if base_language changes during processing
                         if self.base_language != current_base_language:
-                            # print("Base language changed during processing. Restarting listening loop.")
+                            print("Base language changed during processing. Restarting listening loop.")
                             break
 
         except KeyboardInterrupt:
-            # print("\nExiting...")
-            if self.listener:
-                self.listener.stop()
+            print("\nExiting...")
             sys.exit()
