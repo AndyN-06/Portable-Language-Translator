@@ -169,19 +169,16 @@ class TranslatorDevice:
         # Map of available voice variants per language and gender
         voice_variants = {
             'en-US': {
-                texttospeech.SsmlVoiceGender.FEMALE: 'A',
+                texttospeech.SsmlVoiceGender.FEMALE: 'F',
                 texttospeech.SsmlVoiceGender.MALE: 'B',
-                texttospeech.SsmlVoiceGender.NEUTRAL: 'C',
             },
             'es-US': {
                 texttospeech.SsmlVoiceGender.FEMALE: 'A',
-                texttospeech.SsmlVoiceGender.MALE: 'B',
-                texttospeech.SsmlVoiceGender.NEUTRAL: 'C',
+                texttospeech.SsmlVoiceGender.MALE: 'C',
             },
             'ko-KR': {
-                texttospeech.SsmlVoiceGender.FEMALE: 'A',
-                texttospeech.SsmlVoiceGender.MALE: 'B',
-                texttospeech.SsmlVoiceGender.NEUTRAL: 'C',
+                texttospeech.SsmlVoiceGender.FEMALE: 'B',
+                texttospeech.SsmlVoiceGender.MALE: 'C',
             },
         }
         variant = voice_variants.get(language_code, {}).get(ssml_gender)
@@ -198,16 +195,15 @@ class TranslatorDevice:
         # Map gender string to SsmlVoiceGender
         gender_map = {
             'MALE': texttospeech.SsmlVoiceGender.MALE,
-            'FEMALE': texttospeech.SsmlVoiceGender.FEMALE,
-            'NEUTRAL': texttospeech.SsmlVoiceGender.NEUTRAL
+            'FEMALE': texttospeech.SsmlVoiceGender.FEMALE
         }
-        ssml_gender = gender_map.get(self.gender, texttospeech.SsmlVoiceGender.NEUTRAL)
+        ssml_gender = gender_map.get(self.gender, texttospeech.SsmlVoiceGender.MALE)  # Default to MALE if not set
 
         # Get the voice variant letter
         variant = self.get_voice_variant(target_language_code, ssml_gender)
 
-        # Generate voice name
-        voice_name = f"{target_language_code}-{self.voice_type}-{variant}"
+        # Generate voice name using 'Standard' voice type
+        voice_name = f"{target_language_code}-Standard-{variant}"
 
         # Configure the text input and voice parameters
         input_text = texttospeech.SynthesisInput(text=text)
@@ -233,17 +229,16 @@ class TranslatorDevice:
         except Exception as e:
             print(f"Error during speech synthesis: {e}")
 
-    def set_settings(self, base_language, gender, voice_type):
+    def set_settings(self, base_language, gender):
         with self.language_lock:
             self.base_language = base_language
             self.gender = gender
-            self.voice_type = voice_type
             self.mode = None  # Reset mode
             # Update language combinations based on the new base language
             self.lang_combos = [
                 [self.base_language, lang] for lang in self.supported_languages if lang != self.base_language
             ]
-            print(f"Settings updated: Base Language - {self.base_language}, Gender - {self.gender}, Type - {self.voice_type}")
+            print(f"Settings updated: Base Language - {self.base_language}, Gender - {self.gender}")
 
     def start(self):
         print("Starting automatic translator device.")
