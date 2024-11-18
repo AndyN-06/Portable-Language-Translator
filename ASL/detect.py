@@ -165,8 +165,19 @@ def main():
                     if word_list:
                         word_list = word_list.lower()
                         corrected_word_list = correct_sentence(word_list)
+
+                        if corrected_word_list.strip().lower() == "no correction needed":
+                            output_content = word_list
+                        else:
+                            output_content = corrected_word_list
+
                         # print(corrected_word_list)
-                        print(f"Final and corrected word list: {corrected_word_list}")
+                        print(f"Final and corrected word list: {output_content}")
+                        # place corrected_word_list in a txt file that will be used for audial output
+                        output_file_path = "sentence.txt"
+                        with open(output_file_path, "w") as file:
+                            file.write(output_content)
+                        print(f"Corrected word list written to: {output_file_path}")
                     else:
                         print("No words detected.")
 
