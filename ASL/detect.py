@@ -211,7 +211,7 @@ def main():
             (10, 70),
             cv.FONT_HERSHEY_SIMPLEX,
             0.7,
-            (255, 255, 255),
+            (0, 0, 0),
             2,
             cv.LINE_AA,
         )
@@ -222,7 +222,7 @@ def main():
             (10, 110),
             cv.FONT_HERSHEY_SIMPLEX,
             0.7,
-            (255, 255, 255),
+            (0, 0, 0),
             2,
             cv.LINE_AA,
         )
@@ -313,7 +313,7 @@ def draw_info_text(image, handedness_label, hand_sign_text):
         (10, 30),
         cv.FONT_HERSHEY_SIMPLEX,
         1.0,
-        (255, 255, 255),
+        (0, 0, 0),
         2,
         cv.LINE_AA,
     )
