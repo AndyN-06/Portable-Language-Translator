@@ -13,9 +13,10 @@ from google.cloud import translate_v2 as translate
 import webrtcvad  # Voice Activity Detection library
 from pydub import AudioSegment
 from pydub.playback import play
+import time
 
 # Set your environment variable for Google Cloud credentials
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'C:\\Users\\andre\\Desktop\\language-440220-e0110f2acfe7.json'  # Update this path
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'C:\\Users\\andre\\Desktop\\optimum-reactor-449320-e8-dcb220f309a5.json'
 
 class TranslatorDevice:
     def __init__(self):
@@ -103,6 +104,9 @@ class TranslatorDevice:
 
     def transcribe_and_translate(self, audio_bytes):
         """Transcribe the audio, detect language, set mode, translate, and synthesize the translated text."""
+        # Start timing
+        start_time = time.time()
+
         audio = speech.RecognitionAudio(content=audio_bytes)
         config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
@@ -131,7 +135,7 @@ class TranslatorDevice:
         # Detect language of the transcribed text
         detection = self.translate_client.detect_language(full_transcript)
         detected_language = detection['language']
-        print(f"Detected language: {detected_language}")
+        # print(f"Detected language: {detected_language}")
 
         with self.language_lock:
             # Check if mode is set or if detected language is neither base nor current target
@@ -145,9 +149,9 @@ class TranslatorDevice:
 
                 if found_pair:
                     self.mode = found_pair
-                    print(f"Mode set to detected language pair: {self.mode}")
+                    # print(f"Mode set to detected language pair: {self.mode}")
                 else:
-                    print(f"No matching language pair found for detected language ({detected_language}) with base language.")
+                    # print(f"No matching language pair found for detected language ({detected_language}) with base language.")
                     return  # Do nothing if no suitable language combo is found
 
             # Set the target language based on the current mode
@@ -156,13 +160,26 @@ class TranslatorDevice:
             else:
                 target_language = self.mode[0]
 
-            print(f"Mode set to: {self.mode}")
+            # print(f"Mode set to: {self.mode}")
 
         # Translate the text
         translated_text = self.translate_text(full_transcript, target_language[:2])
 
+        print(f"Translated text: {translated_text}")
+
+        # Record the time taken for transcription and translation
+        tts_start_time = time.time()
+        # print(f"Time taken for transcription and translation: {tts_start_time - start_time:.2f} seconds")
+        
+        # Record the time taken for TTS and playback
+        playback_start_time = time.time()
+
+        # print(f"Time taken for TTS and playback: {playback_start_time - tts_start_time:.2f} seconds")
+        print(f"Total time from sending audio to playback: {playback_start_time - start_time:.2f} seconds")
+
         # Synthesize speech
         self.synthesize_speech(translated_text, target_language)
+
 
     def get_voice_variant(self, language_code, ssml_gender):
         """Get the voice variant letter based on language code and gender."""
@@ -217,7 +234,7 @@ class TranslatorDevice:
 
         try:
             # Generate the speech
-            print(f"Synthesizing speech with voice: {voice_name}")
+            # print(f"Synthesizing speech with voice: {voice_name}")
             response = self.tts_client.synthesize_speech(input=input_text, voice=voice, audio_config=audio_config)
 
             # Play the synthesized speech
@@ -225,7 +242,7 @@ class TranslatorDevice:
             audio_stream = io.BytesIO(audio_content)
             audio_segment = AudioSegment.from_file(audio_stream, format="wav")
             play(audio_segment)
-            print("Playback finished.")
+            # print("Playback finished.")
         except Exception as e:
             print(f"Error during speech synthesis: {e}")
 

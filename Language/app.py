@@ -11,7 +11,7 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 
 # Set the environment variable for Google Cloud credentials
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'C:\\Users\\andre\\Downloads\\language-440220-e0110f2acfe7.json'
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'C:\\Users\\andre\\Desktop\\optimum-reactor-449320-e8-dcb220f309a5.json'
 
 # Initialize Google Cloud clients
 storage_client = storage.Client()
