@@ -1,15 +1,21 @@
 # Portable-Language-Translator
 
-## AWS Local Testing
-1. Install AWS CLI: [link](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+## Language Software testing
+1. Go to language folder
 2. run:
 ```bash
-aws configure
+pip install -r requirements.txt
 ```
-enter in AWS keys and us-east-2 for region
-
-4. run:
+3. have two terminals open
+4. one will be in plt_control folder and run:
 ```bash
-pip install boto3
+npm run dev
 ```
-5. run script
+5. press the localhost link that shows up in terminal to open web app in your browser
+6. the other will be in root folder and run:
+```bash
+python main.py
+```
+5. change settings in web app and press confirm to send settings
+6. speak stuff
+7. ctrl c in terminals to stop it
