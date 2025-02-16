@@ -1,4 +1,0 @@
-opencv-python
-tensorflow
-google-generativeai
-mediapipe>=0.11.0
