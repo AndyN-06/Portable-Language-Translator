@@ -1,20 +1,14 @@
+from picamera2 import Picamera2
 import cv2
 
-cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-cap.set(cv2.CAP_PROP_FPS, 30)
+picam2 = Picamera2()
+picam2.configure(picam2.create_preview_configuration({"format": "RGB888"}))
+picam2.start()
 
-if not cap.isOpened():
-    print("Camera not found!")
-else:
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-        cv2.imshow("Pi Camera Feed", frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-cap.release()
+while True:
+    frame = picam2.capture_array()
+    # Now 'frame' is a numpy array you can pass to Mediapipe or show with OpenCV
+    cv2.imshow("Video", frame)
+    if cv2.waitKey(1) & 0xFF == 27:  # ESC
+        break
 cv2.destroyAllWindows()
