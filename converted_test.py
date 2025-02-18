@@ -80,12 +80,6 @@ sentence = []
 threshold = 0.5
 
 cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH,  480)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
-
-width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-print(f"Current resolution: {int(width)}x{int(height)}")
 
 frame_count = 0
 start_time = time.time()
