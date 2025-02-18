@@ -1,7 +1,7 @@
 import cv2
 
 # Open a connection to the camera (0 is usually the built-in camera, 1 or higher for USB cameras)
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 
 if not cap.isOpened():
     print("Error: Could not open camera.")
