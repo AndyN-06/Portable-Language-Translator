@@ -105,9 +105,9 @@ thread.start()
 
 # === PICAMERA2 SETUP ===
 picam2 = Picamera2()
-# Create a preview configuration (adjust resolution as needed)
-# preview_config = picam2.create_preview_configuration(main={"size": (1280, 1080)})
-# picam2.configure(preview_config)
+#Create a preview configuration (adjust resolution as needed)
+preview_config = picam2.create_preview_configuration(main={"size": (1280, 720)})
+picam2.configure(preview_config)
 picam2.start()
 
 # === MAIN LOOP ===
