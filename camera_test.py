@@ -1,21 +1,23 @@
-from picamera2 import Picamera2
-import time
+import cv2
 
-# Initialize the camera
-picam2 = Picamera2()
+cap = cv2.VideoCapture(
+    "libcamerasrc ! videoconvert ! appsink",
+    cv2.CAP_GSTREAMER
+)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+cap.set(cv2.CAP_PROP_FPS, 30)
 
-# Configure the camera for video recording
-video_config = picam2.create_video_configuration(main={"size": (1920, 1080)})
-picam2.configure(video_config)
+if not cap.isOpened():
+    print("Camera not found!")
+else:
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        cv2.imshow("Pi Camera Feed", frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-# Start recording
-picam2.start()
-print("Recording video for 10 seconds...")
-picam2.start_recording("/home/pi/video_test.h264")
-
-time.sleep(10)
-
-# Stop recording
-picam2.stop_recording()
-picam2.stop()
-print("Video saved as /home/pi/video_test.h264")
+cap.release()
+cv2.destroyAllWindows()
