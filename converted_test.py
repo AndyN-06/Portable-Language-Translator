@@ -79,7 +79,7 @@ predictions = []
 sentence = []
 threshold = 0.5
 
-cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+cap = cv2.VideoCapture("/dev/video0")
 
 frame_count = 0
 start_time = time.time()
