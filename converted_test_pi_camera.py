@@ -7,7 +7,7 @@ import time
 actions = np.array(["hello", "thanks", "iloveyou"])
 
 # -- Load the TFLite model --
-interpreter = tf.lite.Interpreter(model_path="model.tflite")
+interpreter = tf.lite.Interpreter(model_path="model.tflite", num_threads=4)
 interpreter.allocate_tensors()
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
@@ -79,7 +79,7 @@ predictions = []
 sentence = []
 threshold = 0.5
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
 
 frame_count = 0
 start_time = time.time()
