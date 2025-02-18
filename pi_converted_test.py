@@ -27,12 +27,18 @@ mp_holistic = mp.solutions.holistic
 mp_drawing = mp.solutions.drawing_utils
 
 def mediapipe_detection(image, holistic_model):
-    """Runs Mediapipe Holistic on a frame and returns (drawn_frame, results)."""
-    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    image_rgb.flags.writeable = False
-    results = holistic_model.process(image_rgb)
-    image_rgb.flags.writeable = True
-    drawn_frame = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
+    """
+    Processes an image using MediaPipe Holistic.
+    
+    Assumes 'image' is in RGB format.
+    Returns:
+      - drawn_frame: image converted to BGR for display with OpenCV.
+      - results: MediaPipe detection results.
+    """
+    # Since the image from Picamera2 is already in RGB, no conversion is needed.
+    results = holistic_model.process(image)
+    # Convert to BGR for displaying with OpenCV
+    drawn_frame = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     return drawn_frame, results
 
 def extract_keypoints(results):
@@ -92,7 +98,7 @@ thread.start()
 # === PICAMERA2 SETUP ===
 picam2 = Picamera2()
 # Create a preview configuration (adjust resolution as needed)
-preview_config = picam2.create_preview_configuration(main={"size": (640, 480)})
+preview_config = picam2.create_preview_configuration(main={"size": (1920, 1080)})
 picam2.configure(preview_config)
 picam2.start()
 
@@ -111,11 +117,13 @@ with mp_holistic.Holistic(
 ) as holistic:
     while True:
         # Capture frame from PiCamera2
+        # The captured frame is in RGB format
         frame = picam2.capture_array()
         if frame is None:
             break
 
         frame_count += 1
+        # Process the image (no need to convert from BGR to RGB)
         image, results = mediapipe_detection(frame, holistic)
         draw_styled_landmarks(image, results)
 
