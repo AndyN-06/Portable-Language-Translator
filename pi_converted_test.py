@@ -29,17 +29,25 @@ mp_drawing = mp.solutions.drawing_utils
 def mediapipe_detection(image, holistic_model):
     """
     Processes an image using MediaPipe Holistic.
-    
-    Assumes 'image' is in RGB format.
+    Ensures the input is a 3-channel RGB image.
     Returns:
-      - drawn_frame: image converted to BGR for display with OpenCV.
+      - drawn_frame: image converted to BGR for OpenCV display.
       - results: MediaPipe detection results.
     """
-    # Since the image from Picamera2 is already in RGB, no conversion is needed.
+    # If image has 4 channels (e.g. BGRA), convert from BGRA to RGB.
+    if image.shape[2] == 4:
+        image = cv2.cvtColor(image, cv2.COLOR_BGRA2RGB)
+    # If image has 3 channels, assume it's BGR and convert to RGB.
+    elif image.shape[2] == 3:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    else:
+        raise ValueError("Input image does not have 3 or 4 channels.")
+
     results = holistic_model.process(image)
-    # Convert to BGR for displaying with OpenCV
+    # Convert the image back to BGR for display with OpenCV.
     drawn_frame = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     return drawn_frame, results
+
 
 def extract_keypoints(results):
     """Extracts pose, face, left-hand, and right-hand landmarks into a single array."""
