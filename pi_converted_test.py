@@ -106,7 +106,7 @@ thread.start()
 # === PICAMERA2 SETUP ===
 picam2 = Picamera2()
 # Create a preview configuration (adjust resolution as needed)
-preview_config = picam2.create_preview_configuration(main={"size": (720, 1280)})
+preview_config = picam2.create_preview_configuration(main={"size": (1280, 1080)})
 picam2.configure(preview_config)
 picam2.start()
 
@@ -124,30 +124,29 @@ with mp_holistic.Holistic(
     min_tracking_confidence=0.5
 ) as holistic:
     while True:
-        # Capture frame from PiCamera2
-        # The captured frame is in RGB format
+        # Capture frame from PiCamera2 (frame is in RGB format)
         frame = picam2.capture_array()
+
         if frame is None:
             break
 
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)  # Convert to BGR for OpenCV
+
         frame_count += 1
-        # Process the image (no need to convert from BGR to RGB)
         image, results = mediapipe_detection(frame, holistic)
         draw_styled_landmarks(image, results)
 
         keypoints = extract_keypoints(results)
         sequence.append(keypoints)
-        sequence = sequence[-30:]  # Keep only the last 30 frames
+        sequence = sequence[-30:]
 
         if len(sequence) == 30 and not sequence_queue.full():
-            sequence_queue.put_nowait(np.array(sequence))  # Send sequence to worker
+            sequence_queue.put_nowait(np.array(sequence))
 
-        # Check if there's a new prediction result
         if not result_queue.empty():
             predicted_action, confidence = result_queue.get_nowait()
             predictions.append(predicted_action)
 
-            # Ensure at least 10 consistent predictions before displaying
             if (len(predictions) > 10 and 
                 np.unique(predictions[-10:])[0] == predicted_action and 
                 confidence > threshold):
@@ -159,7 +158,6 @@ with mp_holistic.Holistic(
             if len(sentence) > 3:
                 sentence = sentence[-3:]
 
-        # Display the current sentence on screen
         cv2.putText(
             image, ' '.join(sentence), (10, 30), 
             cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA
@@ -167,7 +165,6 @@ with mp_holistic.Holistic(
 
         cv2.imshow("OpenCV Feed", image)
 
-        # FPS calculation
         current_time = time.time()
         if current_time - start_time >= 1.0:
             fps = frame_count / (current_time - start_time)
@@ -177,6 +174,7 @@ with mp_holistic.Holistic(
 
         if cv2.waitKey(10) & 0xFF == ord('q'):
             break
+
 
 picam2.stop()
 cv2.destroyAllWindows()
