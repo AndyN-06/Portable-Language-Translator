@@ -1,14 +1,21 @@
 from picamera2 import Picamera2
-import cv2
+import time
 
+# Initialize the camera
 picam2 = Picamera2()
-picam2.configure(picam2.create_preview_configuration({"format": "RGB888"}))
-picam2.start()
 
-while True:
-    frame = picam2.capture_array()
-    # Now 'frame' is a numpy array you can pass to Mediapipe or show with OpenCV
-    cv2.imshow("Video", frame)
-    if cv2.waitKey(1) & 0xFF == 27:  # ESC
-        break
-cv2.destroyAllWindows()
+# Configure the camera for video recording
+video_config = picam2.create_video_configuration(main={"size": (1920, 1080)})
+picam2.configure(video_config)
+
+# Start recording
+picam2.start()
+print("Recording video for 10 seconds...")
+picam2.start_recording("/home/pi/video_test.h264")
+
+time.sleep(10)
+
+# Stop recording
+picam2.stop_recording()
+picam2.stop()
+print("Video saved as /home/pi/video_test.h264")
