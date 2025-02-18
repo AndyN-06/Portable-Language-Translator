@@ -8,7 +8,7 @@ import time
 actions = np.array(["hello", "thanks", "iloveyou"])
 
 # 2. Load your trained model (either .keras or .h5, etc.)
-model = tf.keras.models.load_model("my_model.keras")
+model = tf.keras.models.load_model("model.keras")
 
 # 3. Initialize Mediapipe modules
 mp_holistic = mp.solutions.holistic
