@@ -7,7 +7,7 @@ import time
 actions = np.array(["hello", "thanks", "iloveyou"])
 
 # -- Load the TFLite model --z
-interpreter = tf.lite.Interpreter(model_path="model.tflite", num_threads=4)
+interpreter = tf.lite.Interpreter(model_path="model.tflite")
 interpreter.allocate_tensors()
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
