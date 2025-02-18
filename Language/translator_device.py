@@ -16,7 +16,7 @@ from pydub.playback import play
 import time
 
 # Set your environment variable for Google Cloud credentials
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'C:\\Users\\andre\\Desktop\\optimum-reactor-449320-e8-dcb220f309a5.json'
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/home/plt/Desktop/optimum-reactor-449320-e8-dcb220f309a5.json'
 
 class TranslatorDevice:
     def __init__(self):
