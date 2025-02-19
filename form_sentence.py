@@ -134,7 +134,7 @@ with mp_hands.Hands(
         # Check if no gesture has been detected for 2 seconds.
         if time.time() - last_detection_time > 2 and sentence:
             # Append the sentence to a file and clear it
-            with open("sentences.txt", "a") as f:
+            with open("sentences.txt", "w") as f:
                 f.write(' '.join(sentence) + "\n")
             sentence = []
 
