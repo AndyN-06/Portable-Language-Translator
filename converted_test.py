@@ -9,7 +9,7 @@ import queue
 actions = np.array(["hello", "thanks", "iloveyou"])
 
 # -- Load the TFLite model --
-interpreter = tf.lite.Interpreter(model_path="model.tflite")
+interpreter = tf.lite.Interpreter(model_path="hands.tflite")
 interpreter.allocate_tensors()
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()

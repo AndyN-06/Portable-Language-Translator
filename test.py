@@ -9,7 +9,7 @@ import queue
 actions = np.array(["hello", "thanks", "iloveyou"])
 
 # -- Load the TFLite model --
-interpreter = tf.lite.Interpreter(model_path="model.tflite")
+interpreter = tf.lite.Interpreter(model_path="hands.tflite")
 interpreter.allocate_tensors()
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
@@ -22,7 +22,7 @@ def tflite_predict(sequence):
     return interpreter.get_tensor(output_details[0]['index'])[0]
 
 # Mediapipe setup
-mp_holistic = mp.solutions.holistic
+mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 
 def mediapipe_detection(image, holistic_model):
@@ -35,38 +35,29 @@ def mediapipe_detection(image, holistic_model):
     return drawn_frame, results
 
 def extract_keypoints(results):
-    """Extracts pose, face, left-hand, and right-hand landmarks into a single array."""
-    pose = np.array([[res.x, res.y, res.z, res.visibility] 
-                     for res in results.pose_landmarks.landmark]).flatten() if results.pose_landmarks else np.zeros(132)
-
-    face = np.array([[res.x, res.y, res.z]
-                     for res in results.face_landmarks.landmark]).flatten() if results.face_landmarks else np.zeros(1404)
-
-    lh = np.array([[res.x, res.y, res.z]
-                   for res in results.left_hand_landmarks.landmark]).flatten() if results.left_hand_landmarks else np.zeros(63)
-
-    rh = np.array([[res.x, res.y, res.z]
-                   for res in results.right_hand_landmarks.landmark]).flatten() if results.right_hand_landmarks else np.zeros(63)
-
-    return np.concatenate([pose, face, lh, rh])
+    # Each hand has 21 landmarks with 3 coordinates (x, y, z)
+    lh = np.zeros(21 * 3)
+    rh = np.zeros(21 * 3)
+    if results.multi_hand_landmarks and results.multi_handedness:
+        for hand_landmarks, handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
+            # handedness.classification is a list; we take the first element.
+            label = handedness.classification[0].label
+            keypoints = np.array([[lm.x, lm.y, lm.z] for lm in hand_landmarks.landmark]).flatten()
+            if label == 'Left':
+                lh = keypoints
+            elif label == 'Right':
+                rh = keypoints
+    # Concatenate left and right hand keypoints into one array (total length = 126)
+    return np.concatenate([lh, rh])
 
 def draw_styled_landmarks(image, results):
-    """Draw pose and hand landmarks (face landmarks are commented out)."""
-    mp_drawing.draw_landmarks(
-        image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS,
-        mp_drawing.DrawingSpec(color=(80,22,10), thickness=2, circle_radius=4),
-        mp_drawing.DrawingSpec(color=(80,44,121), thickness=2, circle_radius=2)
-    )
-    mp_drawing.draw_landmarks(
-        image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS,
-        mp_drawing.DrawingSpec(color=(121,22,76), thickness=2, circle_radius=4),
-        mp_drawing.DrawingSpec(color=(121,44,250), thickness=2, circle_radius=2)
-    )
-    mp_drawing.draw_landmarks(
-        image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS,
-        mp_drawing.DrawingSpec(color=(245,117,66), thickness=2, circle_radius=4),
-        mp_drawing.DrawingSpec(color=(245,66,230), thickness=2, circle_radius=2)
-    )
+    if results.multi_hand_landmarks:
+        for hand_landmarks in results.multi_hand_landmarks:
+            mp_drawing.draw_landmarks(
+                image, hand_landmarks, mp_hands.HAND_CONNECTIONS,
+                mp_drawing.DrawingSpec(color=(121,22,76), thickness=2, circle_radius=4),
+                mp_drawing.DrawingSpec(color=(121,44,250), thickness=2, circle_radius=2)
+            )
 
 # === MULTITHREADING SETUP ===
 sequence_queue = queue.Queue(maxsize=5)  # Queue to store sequences for inference
@@ -98,17 +89,17 @@ cap = cv2.VideoCapture(0)
 frame_count = 0
 start_time = time.time()
 
-with mp_holistic.Holistic(
+with mp_hands.Hands(
     min_detection_confidence=0.5,
-    min_tracking_confidence=0.5
-) as holistic:
+    min_tracking_confidence=0.8
+) as hands:
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             break
 
         frame_count += 1
-        image, results = mediapipe_detection(frame, holistic)
+        image, results = mediapipe_detection(frame, hands)
         draw_styled_landmarks(image, results)
 
         keypoints = extract_keypoints(results)
