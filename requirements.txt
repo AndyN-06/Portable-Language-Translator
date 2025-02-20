@@ -1,8 +1,18 @@
-tensorflow==2.16.1
-mediapipe==0.10.14
-opencv-python==4.10.0.84
-opencv-contrib-python==4.10.0.84
-numpy==1.26.4
-matplotlib==3.9.2
-scikit-learn==1.5.2
-protobuf>=4.25.3,<5.0.0
+# tensorflow==2.16.1
+# mediapipe==0.10.14
+# opencv-python==4.10.0.84
+# opencv-contrib-python==4.10.0.84
+# numpy==1.26.4
+# matplotlib==3.9.2
+# scikit-learn==1.5.2
+# protobuf>=4.25.3,<5.0.0
+numpy
+sounddevice
+google-cloud-speech
+google-cloud-texttospeech
+google-cloud-translate
+webrtcvad
+pydub
+pynput
+flask
+flask-cors

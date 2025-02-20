@@ -83,7 +83,7 @@ thread.start()
 sequence = []
 predictions = []
 sentence = []
-threshold = 0.5
+threshold = 0.8
 
 # Initialize last detection time
 last_detection_time = time.time()
@@ -115,6 +115,9 @@ with mp_hands.Hands(
         # Check if there's a new prediction result
         if not result_queue.empty():
             predicted_action, confidence = result_queue.get_nowait()
+            
+            print(f"Intermediate prediction: {actions[predicted_action]} with confidence {confidence:.2f}")
+            
             predictions.append(predicted_action)
 
             # Ensure at least 10 consistent predictions before displaying
@@ -126,6 +129,8 @@ with mp_hands.Hands(
                 if not sentence or (action_name != sentence[-1]):
                     sentence.append(action_name)
                     last_detection_time = time.time()  # Update the time on new detection
+                    
+                    print(f"Consistent detection: {action_name} with confidence {confidence:.2f}")
 
             # Limit the sentence length if desired
             if len(sentence) > 3:
