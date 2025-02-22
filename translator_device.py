@@ -12,8 +12,9 @@ from google.cloud import texttospeech
 from google.cloud import translate_v2 as translate
 import webrtcvad  # Voice Activity Detection library
 from pydub import AudioSegment
-from pydub.playback import play
+# from pydub.playback import play
 import time
+from pydub.playback import _play_with_simpleaudio as play
 
 # Set your environment variable for Google Cloud credentials
 # os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/home/plt/Desktop/optimum-reactor-449320-e8-dcb220f309a5.json'
@@ -54,6 +55,8 @@ class TranslatorDevice:
 
         # Active flag to control processing. When False, the device is "paused".
         self.active = True
+        self.vad_active = True
+        
 
     def read_audio_chunk(self, stream, frame_duration, sample_rate):
         """Read a chunk of audio from the stream."""
@@ -74,7 +77,7 @@ class TranslatorDevice:
 
         while True:
             # If the device is paused, break out of this generator.
-            if not self.active:
+            if not self.vad_active:
                 break
 
             audio = self.read_audio_chunk(stream, frame_duration_ms, sample_rate)
@@ -211,7 +214,8 @@ class TranslatorDevice:
             audio_content = response.audio_content
             audio_stream = io.BytesIO(audio_content)
             audio_segment = AudioSegment.from_file(audio_stream, format="wav")
-            play(audio_segment)
+            play_obj = play(audio_segment)
+            play_obj.wait_done()
         except Exception as e:
             print(f"Error during speech synthesis: {e}")
 
@@ -260,31 +264,50 @@ class TranslatorDevice:
             print("\nExiting...")
             sys.exit()
 
-    def record_and_transcribe(self, duration=5):
-        """Record audio from the microphone for 'duration' seconds, transcribe it, and return the text."""
-        print(f"Recording audio for {duration} seconds...")
-        # Record audio
-        recording = sd.rec(int(self.SAMPLE_RATE * duration), samplerate=self.SAMPLE_RATE,
-                           channels=self.NUM_CHANNELS, dtype='int16')
-        sd.wait()
-        audio_bytes = recording.tobytes()
+    def listen_and_save_transcription(self, file_path):
+        """Listen until a complete utterance is detected using VAD,
+        transcribe the audio for the base language, save the transcript to file, and return the transcript."""
+        print("Listening for a voice utterance...")
+        with sd.InputStream(samplerate=self.SAMPLE_RATE, channels=self.NUM_CHANNELS, dtype='int16') as stream:
+            # Use the VAD collector to yield audio segments.
+            for audio_bytes in self.vad_collector(
+                    self.SAMPLE_RATE,
+                    self.FRAME_DURATION,
+                    padding_duration_ms=300,
+                    stream=stream):
+                print("Processing captured voice data...")
+                # Check if the audio segment is long enough to be meaningful.
+                if len(audio_bytes) < 1000:
+                    print("Audio segment too short, ignoring...")
+                    continue
 
-        # Set up recognition parameters
-        audio = self.speech.RecognitionAudio(content=audio_bytes)
-        config = self.speech.RecognitionConfig(
-            encoding=self.speech.RecognitionConfig.AudioEncoding.LINEAR16,
-            language_code=self.base_language,
-            sample_rate_hertz=self.SAMPLE_RATE,
-        )
+                audio = speech.RecognitionAudio(content=audio_bytes)
+                config = speech.RecognitionConfig(
+                    encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+                    language_code=self.base_language,  # Only listen for the base language
+                    sample_rate_hertz=self.SAMPLE_RATE
+                )
+                try:
+                    response = self.speech_client.recognize(config=config, audio=audio)
+                    transcript = " ".join(
+                        [result.alternatives[0].transcript for result in response.results]
+                    ).strip()
+                    if not transcript:
+                        print("No speech detected in this segment, waiting for valid input...")
+                        continue
+                    print(f"Transcription recorded: {transcript}")
+                except Exception as e:
+                    transcript = ""
+                    print(f"Error transcribing audio: {e}")
+                    continue
 
-        try:
-            response = self.speech_client.recognize(config=config, audio=audio)
-            transcript = ""
-            for result in response.results:
-                transcript += result.alternatives[0].transcript + " "
-            transcript = transcript.strip()
-            print(f"Transcription recorded: {transcript}")
-            return transcript
-        except Exception as e:
-            print(f"Error during transcription: {e}")
-            return ""
+                # Save transcript to a file.
+                try:
+                    with open(file_path, "w", encoding="utf-8") as f:
+                        f.write(transcript)
+                    print(f"Transcription saved to {file_path}")
+                except Exception as e:
+                    print(f"Error writing transcription to file: {e}")
+
+                return transcript
+
