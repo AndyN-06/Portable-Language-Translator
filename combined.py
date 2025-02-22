@@ -188,6 +188,15 @@ while True:
         if time.time() - last_detection_time > 2 and sentence:
             with open("sentences.txt", "w") as f:
                 f.write(' '.join(sentence) + "\n")
+                
+            # Plays detected ASL gesture 
+            translator_device.synthesize_speech(' '.join(sentence), translator_device.base_language)
+            
+            # Listen for audio and store transcript in a text file
+            transcript = translator_device.record_and_transcribe(duration=5)
+            with open("audio_transcript.txt", "w") as f:
+                f.write(transcript)
+            
             sentence = []
 
         cv2.putText(

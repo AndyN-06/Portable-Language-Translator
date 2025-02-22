@@ -16,7 +16,8 @@ from pydub.playback import play
 import time
 
 # Set your environment variable for Google Cloud credentials
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/home/plt/Desktop/optimum-reactor-449320-e8-dcb220f309a5.json'
+# os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/home/plt/Desktop/optimum-reactor-449320-e8-dcb220f309a5.json'
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "C:\\Users\\yohan\\Desktop\\optimum-reactor-449320-e8-dcb220f309a5.json"
 
 class TranslatorDevice:
     def __init__(self):
@@ -258,3 +259,32 @@ class TranslatorDevice:
         except KeyboardInterrupt:
             print("\nExiting...")
             sys.exit()
+
+    def record_and_transcribe(self, duration=5):
+        """Record audio from the microphone for 'duration' seconds, transcribe it, and return the text."""
+        print(f"Recording audio for {duration} seconds...")
+        # Record audio
+        recording = sd.rec(int(self.SAMPLE_RATE * duration), samplerate=self.SAMPLE_RATE,
+                           channels=self.NUM_CHANNELS, dtype='int16')
+        sd.wait()
+        audio_bytes = recording.tobytes()
+
+        # Set up recognition parameters
+        audio = self.speech.RecognitionAudio(content=audio_bytes)
+        config = self.speech.RecognitionConfig(
+            encoding=self.speech.RecognitionConfig.AudioEncoding.LINEAR16,
+            language_code=self.base_language,
+            sample_rate_hertz=self.SAMPLE_RATE,
+        )
+
+        try:
+            response = self.speech_client.recognize(config=config, audio=audio)
+            transcript = ""
+            for result in response.results:
+                transcript += result.alternatives[0].transcript + " "
+            transcript = transcript.strip()
+            print(f"Transcription recorded: {transcript}")
+            return transcript
+        except Exception as e:
+            print(f"Error during transcription: {e}")
+            return ""
