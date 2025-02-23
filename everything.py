@@ -149,8 +149,18 @@ mode = "SPEECH"  # Initial mode
 cap = None
 
 def change_mode():
-    global mode, cap
+    global mode, cap, sequence, predictions, sentence
     # Clear any open CV2 windows (not used for UI anymore)
+    
+    while not sequence_queue.empty():
+        sequence_queue.get_nowait()
+    while not result_queue.empty():
+        result_queue.get_nowait()
+        
+    sequence.clear()
+    predictions.clear()
+    sentence.clear()
+    
     cv2.destroyAllWindows()
     if mode == "ASL":
         mode = "SPEECH"
