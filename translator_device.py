@@ -56,6 +56,7 @@ class TranslatorDevice:
         # Active flag to control processing. When False, the device is "paused".
         self.active = True
         self.vad_active = True
+        self.reset_time = None
         
 
     def read_audio_chunk(self, stream, frame_duration, sample_rate):
@@ -253,10 +254,15 @@ class TranslatorDevice:
 
                     for audio_data in frames_generator:
                         # If paused during processing, break out to recheck the active flag
+                        if self.reset_time and time.time() < self.reset_time + 1:
+                            print("Discarding residual audio segment due to recent mode switch...")
+                            continue
+                        
                         if not self.active:
                             break
                         print("Processing captured voice data...")
                         self.transcribe_and_translate(audio_data)
+                        
                         if self.base_language != current_base_language:
                             print("Base language changed during processing. Restarting listening loop.")
                             break
@@ -311,4 +317,9 @@ class TranslatorDevice:
                     print(f"Error writing transcription to file: {e}")
 
                 return transcript
+
+
+    def reset(self):
+        self.reset_time = time.time()
+        print("Translator device reset: Ignoring audio for the next 2 seconds.")
 

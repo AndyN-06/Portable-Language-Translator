@@ -183,7 +183,7 @@ def change_mode():
             cap.release()
             cap = None      
         print("Mode changed to SPEECH")
-        flush_audio_stream()
+        translator_device.reset()
         translator_device.active = True
     else:
         mode = "ASL"
