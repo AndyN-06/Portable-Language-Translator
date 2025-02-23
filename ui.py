@@ -64,7 +64,7 @@ class CameraTextViewer(QWidget):
     #         pixmap = QPixmap.fromImage(qt_image).scaled(self.video_label.width(), self.video_label.height(), Qt.KeepAspectRatio)
     #         self.video_label.setPixmap(pixmap)
     
-    def update_camera(self, latest_frame):
+    def update_camera(self):
         """Capture a frame from the webcam and display it."""
         # from everything import latest_frame  # Ensure the latest_frame is imported dynamically
         if latest_frame is not None:
