@@ -107,11 +107,11 @@ def set_settings():
 def speech_mode_logic():
     """Activate speech mode."""
     print("Switched to Speech Mode. Translator device is active and listening.")
-    translator_device.active = True
     translator_device.vad_active = True
     translator_device.vad_active = False
     time.sleep(0.5)
-    translator_device.vad_active = True  
+    translator_device.vad_active = True
+    translator_device.active = True
     
 
 def asl_mode_logic():
