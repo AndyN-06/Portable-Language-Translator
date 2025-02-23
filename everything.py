@@ -125,10 +125,10 @@ flask_thread.start()
 def set_volume(level):
     os.system(f"amixer -D pulse sset Master {level}%")
 
-def increase_volume(step=5):
+def increase_volume(step=10):
     os.system(f"amixer -D pulse sset Master {step}%+")
 
-def decrease_volume(step=5):
+def decrease_volume(step=10):
     os.system(f"amixer -D pulse sset Master {step}%-")
 
 def get_volume():
