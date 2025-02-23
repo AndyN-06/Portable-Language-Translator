@@ -168,6 +168,9 @@ def change_mode():
         if cap is not None:
             cap.release()
             cap = None
+        translator_device.vad_active = False
+        time.sleep(0.5)
+        translator_device.vad_active = True        
         print("Mode changed to SPEECH")
     else:
         mode = "ASL"
