@@ -151,15 +151,25 @@ PIN_DOWN = 27
 mode = "SPEECH"  # Initial mode
 cap = None
 
+def flush_audio_stream():
+    # Open a temporary stream to read and discard frames
+    with sd.InputStream(samplerate=translator_device.SAMPLE_RATE, 
+                        channels=translator_device.NUM_CHANNELS, dtype='int16') as flush_stream:
+        # Read and discard frames for 2 seconds
+        flush_end = time.time() + 2
+        while time.time() < flush_end:
+            try:
+                _ = flush_stream.read(int(translator_device.SAMPLE_RATE * (translator_device.FRAME_DURATION / 1000.0)))
+            except Exception as e:
+                pass
+
 def change_mode():
     global mode, cap, sequence, predictions, sentence
-    # Clear any open CV2 windows (not used for UI anymore)
-    
+    # Flush ASL buffers/queues
     while not sequence_queue.empty():
         sequence_queue.get_nowait()
     while not result_queue.empty():
         result_queue.get_nowait()
-        
     sequence.clear()
     predictions.clear()
     sentence.clear()
@@ -172,6 +182,8 @@ def change_mode():
             cap.release()
             cap = None      
         print("Mode changed to SPEECH")
+        flush_audio_stream()
+        translator_device.active = True
     else:
         mode = "ASL"
         asl_mode_logic()
