@@ -108,11 +108,14 @@ def speech_mode_logic():
     """Activate speech mode."""
     print("Switched to Speech Mode. Translator device is active and listening.")
     translator_device.active = True
+    translator_device.vad_active = True
+    
 
 def asl_mode_logic():
     """Initialize ASL mode."""
     print("Switched to ASL Mode. Camera activated for gesture detection.")
     translator_device.active = False
+    translator_device.vad_active = False
 
 translator_thread = threading.Thread(target=translator_device.start, daemon=True)
 translator_thread.start()
@@ -151,7 +154,6 @@ def change_mode():
     cv2.destroyAllWindows()
     if mode == "ASL":
         mode = "SPEECH"
-        translator_device.vad_active = False
         speech_mode_logic()
         if cap is not None:
             cap.release()
