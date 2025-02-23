@@ -70,6 +70,7 @@ class TranslatorDevice:
 
     def vad_collector(self, sample_rate, frame_duration_ms, padding_duration_ms, stream):
         """Yield segments of audio where speech is detected."""
+        voiced_frames = []
         num_padding_frames = int(padding_duration_ms / frame_duration_ms)
         ring_buffer = collections.deque(maxlen=num_padding_frames)
         triggered = False

@@ -109,7 +109,7 @@ def speech_mode_logic():
     print("Switched to Speech Mode. Translator device is active and listening.")
     translator_device.vad_active = True
     translator_device.vad_active = False
-    time.sleep(0.5)
+    time.sleep(1)
     translator_device.vad_active = True
     translator_device.active = True
     
