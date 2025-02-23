@@ -151,6 +151,7 @@ def change_mode():
     cv2.destroyAllWindows()
     if mode == "ASL":
         mode = "SPEECH"
+        translator_device.vad_active = False
         speech_mode_logic()
         if cap is not None:
             cap.release()
