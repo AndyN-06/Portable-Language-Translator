@@ -7,6 +7,7 @@ import time
 import threading
 import queue
 import os
+import sounddevice as sd
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from gpiozero import Button
