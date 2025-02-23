@@ -4,7 +4,7 @@ import os
 from PyQt5.QtCore import QTimer, Qt, QFileSystemWatcher
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QTextEdit, QHBoxLayout
-# from everything import latest_frame
+from everything import latest_frame
 
 class CameraTextViewer(QWidget):
     def __init__(self, file_path):
@@ -66,7 +66,7 @@ class CameraTextViewer(QWidget):
     
     def update_camera(self, latest_frame):
         """Capture a frame from the webcam and display it."""
-        from everything import latest_frame  # Ensure the latest_frame is imported dynamically
+        # from everything import latest_frame  # Ensure the latest_frame is imported dynamically
         if latest_frame is not None:
             frame = latest_frame
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
