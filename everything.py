@@ -13,6 +13,8 @@ from gpiozero import Button
 from ui import CameraTextViewer
 from PyQt5.QtWidgets import QApplication
 from translator_device import TranslatorDevice  # Adjust the import path as needed
+from shared import latest_frame
+import shared
 
 # ==================== ASL & SPEECH SETUP ====================
 
@@ -203,7 +205,7 @@ def asl_processing_loop():
             if not ret:
                 continue
             
-            latest_frame = frame.copy()
+            shared.latest_frame = frame.copy()
 
             frame_count += 1
             image, results = mediapipe_detection(frame, hands_instance)
