@@ -66,7 +66,7 @@ class CameraTextViewer(QWidget):
     
     def update_camera(self):
         """Capture a frame from the webcam and display it."""
-        # from everything import latest_frame  # Ensure the latest_frame is imported dynamically
+        from everything import latest_frame  # Ensure the latest_frame is imported dynamically
         if latest_frame is not None:
             frame = latest_frame
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
