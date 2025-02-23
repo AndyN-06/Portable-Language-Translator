@@ -109,6 +109,9 @@ def speech_mode_logic():
     print("Switched to Speech Mode. Translator device is active and listening.")
     translator_device.active = True
     translator_device.vad_active = True
+    translator_device.vad_active = False
+    time.sleep(0.5)
+    translator_device.vad_active = True  
     
 
 def asl_mode_logic():
@@ -167,10 +170,7 @@ def change_mode():
         speech_mode_logic()
         if cap is not None:
             cap.release()
-            cap = None
-        translator_device.vad_active = False
-        time.sleep(0.5)
-        translator_device.vad_active = True        
+            cap = None      
         print("Mode changed to SPEECH")
     else:
         mode = "ASL"
