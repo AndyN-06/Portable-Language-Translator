@@ -4,6 +4,7 @@ import os
 from PyQt5.QtCore import QTimer, Qt, QFileSystemWatcher
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QTextEdit, QHBoxLayout
+from everything import latest_frame
 
 class CameraTextViewer(QWidget):
     def __init__(self, file_path):
@@ -32,7 +33,7 @@ class CameraTextViewer(QWidget):
         self.setLayout(main_layout)
 
         # Open the webcam
-        self.cap = cv2.VideoCapture(0)
+        # self.cap = cv2.VideoCapture(0)
 
         # Timer for updating the camera feed
         self.camera_timer = QTimer()
@@ -47,19 +48,31 @@ class CameraTextViewer(QWidget):
         # Load initial text
         self.load_text()
 
+    # def update_camera(self):
+    #     """Capture a frame from the webcam and display it."""
+    #     ret, frame = self.cap.read()
+    #     if ret:
+    #         # Convert frame from BGR (OpenCV default) to RGB (Qt format)
+    #         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    #         # Convert to QImage
+    #         h, w, ch = frame.shape
+    #         bytes_per_line = ch * w
+    #         qt_image = QImage(frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
+
+    #         # Scale image to fit QLabel size
+    #         pixmap = QPixmap.fromImage(qt_image).scaled(self.video_label.width(), self.video_label.height(), Qt.KeepAspectRatio)
+    #         self.video_label.setPixmap(pixmap)
+    
     def update_camera(self):
         """Capture a frame from the webcam and display it."""
-        ret, frame = self.cap.read()
-        if ret:
-            # Convert frame from BGR (OpenCV default) to RGB (Qt format)
+        from everything import latest_frame  # Ensure the latest_frame is imported dynamically
+        if latest_frame is not None:
+            frame = latest_frame
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-            # Convert to QImage
             h, w, ch = frame.shape
             bytes_per_line = ch * w
             qt_image = QImage(frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
-
-            # Scale image to fit QLabel size
             pixmap = QPixmap.fromImage(qt_image).scaled(self.video_label.width(), self.video_label.height(), Qt.KeepAspectRatio)
             self.video_label.setPixmap(pixmap)
 
@@ -75,16 +88,16 @@ class CameraTextViewer(QWidget):
         else:
             self.text_edit.setText("File not found.")
 
-    def closeEvent(self, event):
-        """Override close event to release the camera."""
-        self.cap.release()
-        event.accept()
+    # def closeEvent(self, event):
+    #     """Override close event to release the camera."""
+    #     self.cap.release()
+    #     event.accept()
 
 # Run the application
-if __name__ == "__main__":
-    file_path = "text.txt"  # Change this to your actual file path
-    app = QApplication(sys.argv)
-    window = CameraTextViewer(file_path)
-    window.show()
-    sys.exit(app.exec_())
+# if __name__ == "__main__":
+#     file_path = "text.txt"  # Change this to your actual file path
+#     app = QApplication(sys.argv)
+#     window = CameraTextViewer(file_path)
+#     window.show()
+#     sys.exit(app.exec_())
 
