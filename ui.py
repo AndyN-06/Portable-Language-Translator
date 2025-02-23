@@ -14,7 +14,7 @@ class CameraTextViewer(QWidget):
 
         # Set up the UI
         self.setWindowTitle("Camera & Text Viewer")
-        self.showFullScreen()  # Make the window full screen
+        # self.showFullScreen()  # Make the window full screen
 
         # Layout
         main_layout = QHBoxLayout()  # Horizontal layout for side-by-side view

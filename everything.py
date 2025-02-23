@@ -272,7 +272,7 @@ def cleanup():
 # ==================== APPLICATION ENTRY POINT ====================
 
 if __name__ == "__main__":
-    file_path = "asl_speech_audio_transcription.txt"  # This file is updated by the ASL processing thread
+    file_path = "als_speech_audio_transcription.txt"  # This file is updated by the ASL processing thread
     app_qt = QApplication(sys.argv)
     window = CameraTextViewer(file_path)
     window.show()
