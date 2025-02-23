@@ -254,7 +254,7 @@ class TranslatorDevice:
 
                     for audio_data in frames_generator:
                         # If paused during processing, break out to recheck the active flag
-                        if self.reset_time and time.time() < self.reset_time + 1:
+                        if self.reset_time and time.time() < self.reset_time + 0.5:
                             print("Discarding residual audio segment due to recent mode switch...")
                             continue
                         
