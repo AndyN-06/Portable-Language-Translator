@@ -15,6 +15,7 @@ from pydub import AudioSegment
 # from pydub.playback import play
 import time
 from pydub.playback import _play_with_simpleaudio as play
+import pygame
 
 # Set your environment variable for Google Cloud credentials
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/home/plt/Desktop/optimum-reactor-449320-e8-dcb220f309a5.json'
