@@ -1,3 +1,4 @@
+# UI.py
 import sys
 import cv2
 import os
@@ -66,15 +67,21 @@ class CameraTextViewer(QWidget):
     
     def update_camera(self):
         """Capture a frame from the webcam and display it."""
-        from shared import latest_frame  # Ensure the latest_frame is imported dynamically
-        if latest_frame is not None:
+        from shared import latest_frame, mode  # local import to avoid circular dependency
+        if mode == "ASL" and latest_frame is not None:
             frame = latest_frame
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             h, w, ch = frame.shape
             bytes_per_line = ch * w
             qt_image = QImage(frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
-            pixmap = QPixmap.fromImage(qt_image).scaled(self.video_label.width(), self.video_label.height(), Qt.KeepAspectRatio)
+            pixmap = QPixmap.fromImage(qt_image).scaled(
+                self.video_label.width(), self.video_label.height(), Qt.KeepAspectRatio)
             self.video_label.setPixmap(pixmap)
+        else:
+            # Create a blank image (black) and set it
+            blank = QImage(self.video_label.width(), self.video_label.height(), QImage.Format_RGB888)
+            blank.fill(Qt.black)
+            self.video_label.setPixmap(QPixmap.fromImage(blank))
 
     def load_text(self):
         """Load the text file content into the QTextEdit widget."""

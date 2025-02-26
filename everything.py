@@ -194,6 +194,8 @@ def change_mode():
             cap = cv2.VideoCapture(0)
         print("Mode changed to ASL")
 
+    shared.mode = mode
+
 def volume_up():
     print("Increased Volume")
     increase_volume()
