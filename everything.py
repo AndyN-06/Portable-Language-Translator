@@ -238,10 +238,9 @@ def asl_processing_loop():
 
             frame_count += 1
             image, results = mediapipe_detection(frame, hands_instance)
-            
-            shared.latest_frame = image.copy()
 
             draw_styled_landmarks(image, results)
+            shared.latest_frame = image.copy()
 
             keypoints = extract_keypoints(results)
             sequence.append(keypoints)
