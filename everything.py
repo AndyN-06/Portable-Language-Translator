@@ -187,6 +187,8 @@ def change_mode():
         translator_device.active = True
     else:
         mode = "ASL"
+        with open(file_path, 'w') as file:
+            pass  # clear the file contents
         asl_mode_logic()
         if cap is None:
             cap = cv2.VideoCapture(0)
@@ -234,13 +236,12 @@ def asl_processing_loop():
             if not ret:
                 continue
             
-            # shared.latest_frame = frame.copy()
+            shared.latest_frame = frame.copy()
 
             frame_count += 1
             image, results = mediapipe_detection(frame, hands_instance)
 
             draw_styled_landmarks(image, results)
-            shared.latest_frame = image.copy()
 
             keypoints = extract_keypoints(results)
             sequence.append(keypoints)
@@ -304,6 +305,9 @@ def cleanup():
 
 if __name__ == "__main__":
     file_path = "als_speech_audio_transcription.txt"  # This file is updated by the ASL processing thread
+    with open(file_path, 'w') as file:
+        pass  # clear the file contents
+
     app_qt = QApplication(sys.argv)
     window = CameraTextViewer(file_path)
     window.show()
