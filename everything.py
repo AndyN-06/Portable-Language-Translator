@@ -1,3 +1,4 @@
+# everything.py
 import sys
 import cv2
 import mediapipe as mp
@@ -270,11 +271,17 @@ def asl_processing_loop():
                 text_out = ' '.join(sentence)
                 translator_device.synthesize_speech(text_out, translator_device.base_language)
 
+                shared.ui_mode = "TEXT"
+
                 # Listen for audio and store transcript in a text file
                 translator_device.vad_active = True
                 transcript = translator_device.listen_and_save_transcription(file_path="als_speech_audio_transcription.txt")
                 translator_device.vad_active = False
                 sentence = []
+
+                time.sleep(3)
+                shared.ui_mode = "CAMERA"
+
 
             # Sleep briefly to yield control (adjust as needed)
             time.sleep(0.03)

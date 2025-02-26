@@ -66,9 +66,9 @@ class CameraTextViewer(QWidget):
     #         self.video_label.setPixmap(pixmap)
     
     def update_camera(self):
-        """Display the latest camera frame if in ASL mode; otherwise, clear the display."""
-        from shared import latest_frame, mode  # local import to avoid circular dependency
-        if mode == "ASL" and latest_frame is not None:
+        """Display the latest camera frame if in CAMERA mode; otherwise, clear the display."""
+        from shared import latest_frame, ui_mode  # local import to avoid circular dependency
+        if ui_mode == "CAMERA" and latest_frame is not None:
             frame = latest_frame
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             h, w, ch = frame.shape
