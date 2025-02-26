@@ -4,6 +4,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import tensorflow as tf
+import shared
 import time
 import threading
 import queue
@@ -16,7 +17,6 @@ from ui import CameraTextViewer
 from PyQt5.QtWidgets import QApplication
 from translator_device import TranslatorDevice  # Adjust the import path as needed
 from shared import latest_frame
-import shared
 
 # ==================== ASL & SPEECH SETUP ====================
 
