@@ -234,7 +234,7 @@ class TranslatorDevice:
             while pygame.mixer.music.get_busy():
                 continue
 
-            time.sleep(0.5)
+            time.sleep(1)
             self.vad_active = old_vad
 
             # audio_segment = AudioSegment.from_file(audio_stream, format="wav")
