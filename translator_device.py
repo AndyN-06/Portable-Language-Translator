@@ -218,6 +218,7 @@ class TranslatorDevice:
             audio_segment = AudioSegment.from_file(audio_stream, format="wav")
             play_obj = play(audio_segment)
             play_obj.wait_done()
+            time.sleep(0.5)
         except Exception as e:
             print(f"Error during speech synthesis: {e}")
 

@@ -234,10 +234,13 @@ def asl_processing_loop():
             if not ret:
                 continue
             
-            shared.latest_frame = frame.copy()
+            # shared.latest_frame = frame.copy()
 
             frame_count += 1
             image, results = mediapipe_detection(frame, hands_instance)
+            
+            shared.latest_frame = image.copy()
+
             draw_styled_landmarks(image, results)
 
             keypoints = extract_keypoints(results)
