@@ -66,7 +66,7 @@ class CameraTextViewer(QWidget):
     #         self.video_label.setPixmap(pixmap)
     
     def update_camera(self):
-        """Capture a frame from the webcam and display it."""
+        """Display the latest camera frame if in ASL mode; otherwise, clear the display."""
         from shared import latest_frame, mode  # local import to avoid circular dependency
         if mode == "ASL" and latest_frame is not None:
             frame = latest_frame
@@ -78,10 +78,8 @@ class CameraTextViewer(QWidget):
                 self.video_label.width(), self.video_label.height(), Qt.KeepAspectRatio)
             self.video_label.setPixmap(pixmap)
         else:
-            # Create a blank image (black) and set it
-            blank = QImage(self.video_label.width(), self.video_label.height(), QImage.Format_RGB888)
-            blank.fill(Qt.black)
-            self.video_label.setPixmap(QPixmap.fromImage(blank))
+            self.video_label.clear()
+
 
     def load_text(self):
         """Load the text file content into the QTextEdit widget."""
