@@ -221,6 +221,10 @@ class TranslatorDevice:
             with open("temp_audio.wav", "wb") as out:
                 out.write(audio_content)
 
+            # Disable mic temporarily
+            old_vad = self.vad_active
+            self.vad_active = False
+
             # PLay the audio file
             pygame.mixer.init()
             pygame.mixer.music.load("temp_audio.wav")
@@ -230,10 +234,14 @@ class TranslatorDevice:
             while pygame.mixer.music.get_busy():
                 continue
 
+            time.sleep(0.5)
+            self.vad_active = old_vad
+
             # audio_segment = AudioSegment.from_file(audio_stream, format="wav")
             # play_obj = play(audio_segment)
             # play_obj.wait_done()
             # time.sleep(0.5)
+            print("Audio playback finished.")
         except Exception as e:
             print(f"Error during speech synthesis: {e}")
 
