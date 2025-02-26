@@ -215,10 +215,24 @@ class TranslatorDevice:
             response = self.tts_client.synthesize_speech(input=input_text, voice=voice, audio_config=audio_config)
             audio_content = response.audio_content
             audio_stream = io.BytesIO(audio_content)
-            audio_segment = AudioSegment.from_file(audio_stream, format="wav")
-            play_obj = play(audio_segment)
-            play_obj.wait_done()
-            time.sleep(0.5)
+
+            # Save the audio content to a temp file
+            with open("temp_audio.wav", "wb") as out:
+                out.write(audio_content)
+
+            # PLay the audio file
+            pygame.mixer.init()
+            pygame.mixer.music.load("temp_audio.wav")
+            pygame.mixer.music.play()
+
+            # wait for audio to finish playing
+            while pygame.mixer.music.get_busy():
+                continue
+
+            # audio_segment = AudioSegment.from_file(audio_stream, format="wav")
+            # play_obj = play(audio_segment)
+            # play_obj.wait_done()
+            # time.sleep(0.5)
         except Exception as e:
             print(f"Error during speech synthesis: {e}")
 
