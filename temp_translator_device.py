@@ -58,30 +58,7 @@ class TranslatorDevice:
         self.active = True
         self.vad_active = True
         self.reset_time = None
-
-        # Persistent audio stream (for speech mode)
-        self.stream = None
-
-    def start_stream(self):
-        """Initialize and start the persistent audio input stream."""
-        if self.stream is None:
-            self.stream = sd.InputStream(samplerate=self.SAMPLE_RATE,
-                                         channels=self.NUM_CHANNELS,
-                                         dtype='int16')
-            self.stream.start()
-            print("Audio input stream started.")
-
-    def stop_stream(self):
-        """Stop the persistent audio input stream."""
-        if self.stream is not None:
-            self.stream.stop()
-            print("Audio input stream stopped.")
-
-    def resume_stream(self):
-        """Resume the persistent audio input stream."""
-        if self.stream is not None:
-            self.stream.start()
-            print("Audio input stream resumed.")
+        
 
     def read_audio_chunk(self, stream, frame_duration, sample_rate):
         """Read a chunk of audio from the stream."""
@@ -95,6 +72,7 @@ class TranslatorDevice:
 
     def vad_collector(self, sample_rate, frame_duration_ms, padding_duration_ms, stream):
         """Yield segments of audio where speech is detected."""
+        voiced_frames = []
         num_padding_frames = int(padding_duration_ms / frame_duration_ms)
         ring_buffer = collections.deque(maxlen=num_padding_frames)
         triggered = False
@@ -123,7 +101,9 @@ class TranslatorDevice:
                 if triggered:
                     ring_buffer.append(audio)
                     if len(ring_buffer) >= ring_buffer.maxlen:
+                        # Concatenate voiced frames and yield
                         yield b''.join([f.tobytes() for f in voiced_frames])
+                        # Reset for next utterance
                         triggered = False
                         voiced_frames = []
                         ring_buffer.clear()
@@ -235,26 +215,33 @@ class TranslatorDevice:
         try:
             response = self.tts_client.synthesize_speech(input=input_text, voice=voice, audio_config=audio_config)
             audio_content = response.audio_content
+            audio_stream = io.BytesIO(audio_content)
 
             # Save the audio content to a temp file
             with open("temp_audio.wav", "wb") as out:
                 out.write(audio_content)
 
-            # Disable mic temporarily by stopping the persistent stream
-            self.stop_stream()
+            # Disable mic temporarily
+            old_active = self.active
+            old_vad_active = self.vad_active
+            self.active = False
+            self.vad_active = False
 
+            # PLay the audio file
             pygame.mixer.init()
             pygame.mixer.music.load("temp_audio.wav")
             pygame.mixer.music.play()
 
+            # wait for audio to finish playing
             while pygame.mixer.music.get_busy():
                 time.sleep(0.1)
 
             print("Audio playback finished.")
-            # Wait extra time for residual sound to subside
-            time.sleep(2)
-            # Resume microphone input
-            self.resume_stream()
+
+            time.sleep(0.5)
+
+            self.active = old_active
+            self.vad_active = old_vad_active
 
         except Exception as e:
             print(f"Error during speech synthesis: {e}")
@@ -272,40 +259,43 @@ class TranslatorDevice:
     def start(self):
         print("Starting automatic translator device.")
         try:
-            # Start the persistent audio stream
-            self.start_stream()
-            print("Audio input stream opened.")
-            while True:
-                if not self.active:
-                    time.sleep(0.1)
-                    continue
-
-                current_base_language = self.base_language
-                print(f"\nListening for speech in: {current_base_language} (Mode: {self.mode})")
-
-                frames_generator = self.vad_collector(
-                    self.SAMPLE_RATE,
-                    self.FRAME_DURATION,
-                    padding_duration_ms=300,
-                    stream=self.stream
-                )
-
-                for audio_data in frames_generator:
-                    if self.reset_time and time.time() < self.reset_time + 0.5:
-                        print("Discarding residual audio segment due to recent mode switch...")
-                        continue
+            with sd.InputStream(samplerate=self.SAMPLE_RATE, channels=self.NUM_CHANNELS, dtype='int16') as stream:
+                print("Audio input stream opened.")
+                while True:
+                    # Pause processing if not active (speech mode is off)
                     if not self.active:
-                        break
-                    print("Processing captured voice data...")
-                    self.transcribe_and_translate(audio_data)
-                    if self.base_language != current_base_language:
-                        print("Base language changed during processing. Restarting listening loop.")
-                        break
+                        time.sleep(0.1)
+                        continue
+
+                    current_base_language = self.base_language
+                    print(f"\nListening for speech in: {current_base_language} (Mode: {self.mode})")
+
+                    frames_generator = self.vad_collector(
+                        self.SAMPLE_RATE,
+                        self.FRAME_DURATION,
+                        padding_duration_ms=300,
+                        stream=stream
+                    )
+
+                    for audio_data in frames_generator:
+                        # If paused during processing, break out to recheck the active flag
+                        if self.reset_time and time.time() < self.reset_time + 0.5:
+                            print("Discarding residual audio segment due to recent mode switch...")
+                            continue
+                        
+                        if not self.active:
+                            break
+                        print("Processing captured voice data...")
+                        self.transcribe_and_translate(audio_data)
+                        
+                        if self.base_language != current_base_language:
+                            print("Base language changed during processing. Restarting listening loop.")
+                            break
 
         except KeyboardInterrupt:
             print("\nExiting...")
-            self.stream.close()
             sys.exit()
+
 
     # FOR ASL MODE
     def listen_and_save_transcription(self, file_path):
@@ -313,12 +303,14 @@ class TranslatorDevice:
         transcribe the audio for the base language, save the transcript to file, and return the transcript."""
         print("Listening for a voice utterance...")
         with sd.InputStream(samplerate=self.SAMPLE_RATE, channels=self.NUM_CHANNELS, dtype='int16') as stream:
+            # Use the VAD collector to yield audio segments.
             for audio_bytes in self.vad_collector(
                     self.SAMPLE_RATE,
                     self.FRAME_DURATION,
                     padding_duration_ms=300,
                     stream=stream):
                 print("Processing captured voice data...")
+                # Check if the audio segment is long enough to be meaningful.
                 if len(audio_bytes) < 1000:
                     print("Audio segment too short, ignoring...")
                     continue
@@ -326,7 +318,7 @@ class TranslatorDevice:
                 audio = speech.RecognitionAudio(content=audio_bytes)
                 config = speech.RecognitionConfig(
                     encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-                    language_code=self.base_language,
+                    language_code=self.base_language,  # Only listen for the base language
                     sample_rate_hertz=self.SAMPLE_RATE
                 )
                 try:
@@ -343,6 +335,7 @@ class TranslatorDevice:
                     print(f"Error transcribing audio: {e}")
                     continue
 
+                # Save transcript to a file.
                 try:
                     with open(file_path, "w", encoding="utf-8") as f:
                         f.write(transcript)
@@ -352,6 +345,8 @@ class TranslatorDevice:
 
                 return transcript
 
+
     def reset(self):
         self.reset_time = time.time()
         print("Translator device reset: Ignoring audio for the next 2 seconds.")
+
