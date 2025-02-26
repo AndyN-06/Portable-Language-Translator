@@ -222,8 +222,8 @@ class TranslatorDevice:
                 out.write(audio_content)
 
             # Disable mic temporarily
-            old_vad = self.vad_active
-            self.vad_active = False
+            old_active = self.active
+            self.active = False
 
             # PLay the audio file
             pygame.mixer.init()
@@ -232,16 +232,14 @@ class TranslatorDevice:
 
             # wait for audio to finish playing
             while pygame.mixer.music.get_busy():
-                continue
+                time.sleep(0.1)
 
-            time.sleep(1)
-            self.vad_active = old_vad
-
-            # audio_segment = AudioSegment.from_file(audio_stream, format="wav")
-            # play_obj = play(audio_segment)
-            # play_obj.wait_done()
-            # time.sleep(0.5)
             print("Audio playback finished.")
+            time.sleep(1)
+
+
+            self.active = old_active
+            
         except Exception as e:
             print(f"Error during speech synthesis: {e}")
 
@@ -295,6 +293,8 @@ class TranslatorDevice:
             print("\nExiting...")
             sys.exit()
 
+
+    # FOR ASL MODE
     def listen_and_save_transcription(self, file_path):
         """Listen until a complete utterance is detected using VAD,
         transcribe the audio for the base language, save the transcript to file, and return the transcript."""
