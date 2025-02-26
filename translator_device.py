@@ -252,7 +252,7 @@ class TranslatorDevice:
 
             print("Audio playback finished.")
             # Wait extra time for residual sound to subside
-            time.sleep(2)
+            time.sleep(1)
             # Resume microphone input
             self.resume_stream()
 
