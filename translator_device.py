@@ -237,8 +237,9 @@ class TranslatorDevice:
                 time.sleep(0.1)
 
             print("Audio playback finished.")
-            time.sleep(1.5)
 
+            self.flush_vad(flush_duration=1)
+            time.sleep(0.5)
 
             self.active = old_active
             self.vad_active = old_vad_active
@@ -349,4 +350,21 @@ class TranslatorDevice:
     def reset(self):
         self.reset_time = time.time()
         print("Translator device reset: Ignoring audio for the next 2 seconds.")
+
+
+    def flush_vad(self, flush_duration=1):
+        """Flush residual audio from the microphone for a given duration (in seconds)."""
+        print("Flushing VAD input...")
+        try:
+            with sd.InputStream(samplerate=self.SAMPLE_RATE, channels=self.NUM_CHANNELS, dtype='int16') as flush_stream:
+                flush_end = time.time() + flush_duration
+                while time.time() < flush_end:
+                    try:
+                        # Read and discard a small chunk of audio
+                        _ = flush_stream.read(int(self.SAMPLE_RATE * (self.FRAME_DURATION / 1000.0)))
+                    except Exception as e:
+                        pass
+        except Exception as e:
+            print(f"Error during VAD flush: {e}")
+        print("VAD flush complete.")
 
