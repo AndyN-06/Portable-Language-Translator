@@ -223,7 +223,9 @@ class TranslatorDevice:
 
             # Disable mic temporarily
             old_active = self.active
+            old_vad_active = self.vad_active
             self.active = False
+            self.vad_active = False
 
             # PLay the audio file
             pygame.mixer.init()
@@ -235,11 +237,12 @@ class TranslatorDevice:
                 time.sleep(0.1)
 
             print("Audio playback finished.")
-            time.sleep(1)
+            time.sleep(1.5)
 
 
             self.active = old_active
-            
+            self.vad_active = old_vad_active
+
         except Exception as e:
             print(f"Error during speech synthesis: {e}")
 
