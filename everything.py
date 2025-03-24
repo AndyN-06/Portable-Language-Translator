@@ -19,8 +19,7 @@ from translator_device import TranslatorDevice  # Adjust the import path as need
 from shared import latest_frame
 
 # ==================== ASL & SPEECH SETUP ====================
-
-actions = np.array(["hello", "thanks", "iloveyou", "nothing", "help", "yes", "bathroom"])
+actions = np.array(["hello", "thanks", "nothing", "help", "yes", "bathroom"])
 
 # Load the TFLite model
 interpreter = tf.lite.Interpreter(model_path="newest.tflite")
@@ -36,40 +35,52 @@ def tflite_predict(sequence):
     return interpreter.get_tensor(output_details[0]['index'])[0]
 
 # Mediapipe setup
-mp_hands = mp.solutions.hands
+mp_holistic = mp.solutions.holistic
 mp_drawing = mp.solutions.drawing_utils
+holistic = mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5)
 
-def mediapipe_detection(image, hands_model):
-    """Runs Mediapipe Hands on a frame and returns the drawn image and results."""
+def mediapipe_detection(image, model):
+    """Runs MediaPipe Holistic on a frame and returns the drawn image and results."""
     image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image_rgb.flags.writeable = False
-    results = hands_model.process(image_rgb)
+    results = model.process(image_rgb)
     image_rgb.flags.writeable = True
     drawn_frame = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
     return drawn_frame, results
 
 def extract_keypoints(results):
-    # Each hand has 21 landmarks with 3 coordinates (x, y, z)
-    lh = np.zeros(21 * 3)
-    rh = np.zeros(21 * 3)
-    if results.multi_hand_landmarks and results.multi_handedness:
-        for hand_landmarks, handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
-            label = handedness.classification[0].label
-            keypoints = np.array([[lm.x, lm.y, lm.z] for lm in hand_landmarks.landmark]).flatten()
-            if label == 'Left':
-                lh = keypoints
-            elif label == 'Right':
-                rh = keypoints
-    return np.concatenate([lh, rh])
+    """Extract keypoints from MediaPipe Holistic results."""
+    # Extract pose landmarks (33 landmarks * 4 values (x,y,z,visibility))
+    pose = np.array([[res.x, res.y, res.z, res.visibility] for res in results.pose_landmarks.landmark]).flatten() if results.pose_landmarks else np.zeros(132)
+    
+    # Extract left hand landmarks (21 landmarks * 3 values (x,y,z))
+    lh = np.array([[res.x, res.y, res.z] for res in results.left_hand_landmarks.landmark]).flatten() if results.left_hand_landmarks else np.zeros(63)
+    
+    # Extract right hand landmarks (21 landmarks * 3 values (x,y,z))
+    rh = np.array([[res.x, res.y, res.z] for res in results.right_hand_landmarks.landmark]).flatten() if results.right_hand_landmarks else np.zeros(63)
+    
+    return np.concatenate([pose, lh, rh])
 
 def draw_styled_landmarks(image, results):
-    if results.multi_hand_landmarks:
-        for hand_landmarks in results.multi_hand_landmarks:
-            mp_drawing.draw_landmarks(
-                image, hand_landmarks, mp_hands.HAND_CONNECTIONS,
-                mp_drawing.DrawingSpec(color=(121,22,76), thickness=2, circle_radius=4),
-                mp_drawing.DrawingSpec(color=(121,44,250), thickness=2, circle_radius=2)
-            )
+    """Draw landmarks and connections for pose and hands."""
+    # Draw pose connections
+    mp_drawing.draw_landmarks(
+        image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS,
+        mp_drawing.DrawingSpec(color=(80,22,10), thickness=2, circle_radius=4),
+        mp_drawing.DrawingSpec(color=(80,44,121), thickness=2, circle_radius=2)
+    )
+    # Draw left hand connections
+    mp_drawing.draw_landmarks(
+        image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS,
+        mp_drawing.DrawingSpec(color=(121,22,76), thickness=2, circle_radius=4),
+        mp_drawing.DrawingSpec(color=(121,44,250), thickness=2, circle_radius=2)
+    )
+    # Draw right hand connections
+    mp_drawing.draw_landmarks(
+        image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS,
+        mp_drawing.DrawingSpec(color=(245,117,66), thickness=2, circle_radius=4),
+        mp_drawing.DrawingSpec(color=(245,66,230), thickness=2, circle_radius=2)
+    )
 
 # Queues and threading for asynchronous inference
 sequence_queue = queue.Queue(maxsize=5)
@@ -225,13 +236,11 @@ frame_count = 0
 start_time = time.time()
 latest_frame = None
 
-hands_instance = mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.8)
+# hands_instance = mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.8)
 
 def asl_processing_loop():
     global cap, sequence, predictions, sentence, last_detection_time, frame_count, start_time, latest_frame
     while True:
-        # Exit condition can be defined via a key press or external signal
-        # Here, we simply break if a flag is set (you can adjust as needed)
         if mode == "ASL":
             if cap is None:
                 cap = cv2.VideoCapture(0)
@@ -240,10 +249,10 @@ def asl_processing_loop():
                 continue
             
             shared.latest_frame = frame.copy()
-
             frame_count += 1
-            image, results = mediapipe_detection(frame, hands_instance)
-
+            
+            # Use holistic model instead of hands_instance
+            image, results = mediapipe_detection(frame, holistic)
             draw_styled_landmarks(image, results)
 
             keypoints = extract_keypoints(results)
