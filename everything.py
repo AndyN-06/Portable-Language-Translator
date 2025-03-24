@@ -20,10 +20,10 @@ from shared import latest_frame
 
 # ==================== ASL & SPEECH SETUP ====================
 
-actions = np.array(["hello", "thanks", "iloveyou"])
+actions = np.array(["hello", "thanks", "iloveyou", "nothing", "help", "yes", "bathroom"])
 
 # Load the TFLite model
-interpreter = tf.lite.Interpreter(model_path="hands.tflite")
+interpreter = tf.lite.Interpreter(model_path="newest.tflite")
 interpreter.allocate_tensors()
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
