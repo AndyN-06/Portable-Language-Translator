@@ -239,6 +239,9 @@ latest_frame = None
 # hands_instance = mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.8)
 
 def asl_processing_loop():
+    # count number of nothings
+    nothing_count = 0
+
     global cap, sequence, predictions, sentence, last_detection_time, frame_count, start_time, latest_frame
     while True:
         if mode == "ASL":
@@ -259,37 +262,82 @@ def asl_processing_loop():
             sequence.append(keypoints)
             sequence = sequence[-30:]  # Keep the last 30 frames
 
-            if len(sequence) == 30 and not sequence_queue.full():
-                sequence_queue.put_nowait(np.array(sequence))
+            # old version
+            # if len(sequence) == 30 and not sequence_queue.full():
+            #     sequence_queue.put_nowait(np.array(sequence))
+
+            # throttle and only detect every 5 frames
+            if len(sequence) >= 30 and frame_count & 5 == 0 and not sequence_queue.full():
+                sequence_queue.put_nowait(np.array(sequence[-30:]))
 
             if not result_queue.empty():
                 predicted_action, confidence = result_queue.get_nowait()
                 predictions.append(predicted_action)
-                if (len(predictions) > 10 and 
-                    np.unique(predictions[-10:])[0] == predicted_action and 
-                    confidence > threshold):
-                    action_name = actions[predicted_action]
+                action_name = actions[predicted_action]
+                
+                if action_name != "nothing":
+                    nothing_count = 0  # reset counter on valid gesture
+                    # Only add if this gesture is not a duplicate of the last one
                     if not sentence or (action_name != sentence[-1]):
                         sentence.append(action_name)
-                        last_detection_time = time.time()
-                if len(sentence) > 3:
-                    sentence = sentence[-3:]
+                else:
+                    nothing_count += 1  # increment counter for a "nothing" gesture
+
+                # When two consecutive "nothing" gestures follow a valid gesture,
+                # trigger the synthesis.
+                if nothing_count >= 2 and any(word != "nothing" for word in sentence):
+                    text_out = ' '.join(sentence)
+                    translator_device.synthesize_speech(text_out, translator_device.base_language)
+                    shared.ui_mode = "TEXT"
+
+                    sentence = []
+                    sequence = []
+                    predictions = []
+                    
+                    # Listen for audio and store transcript in a text file
+                    translator_device.vad_active = True
+                    transcript = translator_device.listen_and_save_transcription(file_path="als_speech_audio_transcription.txt")
+                    translator_device.vad_active = False
+                    sentence = []
+
+                    time.sleep(3)
+                    shared.ui_mode = "CAMERA"
+
+                    # Clear the sentence and reset the nothing counter for the next sequence
+                    sentence = []
+                    sequence = []
+                    predictions = []
+                    nothing_count = 0
+
+
+            # if not result_queue.empty():
+            #     predicted_action, confidence = result_queue.get_nowait()
+            #     predictions.append(predicted_action)
+            #     if (len(predictions) > 10 and 
+            #         np.unique(predictions[-10:])[0] == predicted_action and 
+            #         confidence > threshold):
+            #         action_name = actions[predicted_action]
+            #         if not sentence or (action_name != sentence[-1]):
+            #             sentence.append(action_name)
+            #             last_detection_time = time.time()
+            #     if len(sentence) > 3:
+            #         sentence = sentence[-3:]
             
-            if time.time() - last_detection_time > 2 and sentence:
-                # When ASL gesture detected, synthesize speech and write to text file
-                text_out = ' '.join(sentence)
-                translator_device.synthesize_speech(text_out, translator_device.base_language)
+            # if time.time() - last_detection_time > 2 and sentence:
+            #     # When ASL gesture detected, synthesize speech and write to text file
+            #     text_out = ' '.join(sentence)
+            #     translator_device.synthesize_speech(text_out, translator_device.base_language)
 
-                shared.ui_mode = "TEXT"
+            #     shared.ui_mode = "TEXT"
 
-                # Listen for audio and store transcript in a text file
-                translator_device.vad_active = True
-                transcript = translator_device.listen_and_save_transcription(file_path="als_speech_audio_transcription.txt")
-                translator_device.vad_active = False
-                sentence = []
+            #     # Listen for audio and store transcript in a text file
+            #     translator_device.vad_active = True
+            #     transcript = translator_device.listen_and_save_transcription(file_path="als_speech_audio_transcription.txt")
+            #     translator_device.vad_active = False
+            #     sentence = []
 
-                time.sleep(3)
-                shared.ui_mode = "CAMERA"
+            #     time.sleep(3)
+            #     shared.ui_mode = "CAMERA"
 
 
             # Sleep briefly to yield control (adjust as needed)
