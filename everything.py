@@ -142,13 +142,21 @@ flask_thread.start()
 # ==================== PHYSICAL BUTTON & VOLUME SETUP ====================
 
 def set_volume(level):
-    os.system(f"amixer -D pulse sset Master {level}%")
+    # Ensure level doesn't exceed 90%
+    capped_level = min(90, max(0, level))
+    os.system(f"amixer -D pulse sset Master {capped_level}%")
 
 def increase_volume(step=10):
-    os.system(f"amixer -D pulse sset Master {step}%+")
+    current = get_volume()
+    # Calculate new volume but don't exceed 90%
+    new_volume = min(90, current + step)
+    set_volume(new_volume)
 
 def decrease_volume(step=10):
-    os.system(f"amixer -D pulse sset Master {step}%-")
+    current = get_volume()
+    # Ensure volume doesn't go below 0
+    new_volume = max(0, current - step)
+    set_volume(new_volume)
 
 def get_volume():
     result = os.popen("amixer -D pulse get Master").read()

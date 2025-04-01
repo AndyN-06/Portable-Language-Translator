@@ -2,3 +2,4 @@
 fw/fw_venv
 hands_saved_model
 Language
+__pycache__
