@@ -143,13 +143,13 @@ flask_thread.start()
 
 def set_volume(level):
     # Ensure level doesn't exceed 90%
-    capped_level = min(90, max(0, level))
+    capped_level = min(100, max(0, level))
     os.system(f"amixer -D pulse sset Master {capped_level}%")
 
 def increase_volume(step=1):
     current = get_volume()
     # Calculate new volume but don't exceed 90%
-    new_volume = min(90, current + step)
+    new_volume = min(100, current + step)
     set_volume(new_volume)
 
 def decrease_volume(step=10):
