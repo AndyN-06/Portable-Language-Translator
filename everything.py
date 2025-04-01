@@ -143,16 +143,16 @@ flask_thread.start()
 
 def set_volume(level):
     # Ensure level doesn't exceed 90%
-    capped_level = min(100, max(0, level))
+    capped_level = min(90, max(0, level))
     os.system(f"amixer -D pulse sset Master {capped_level}%")
 
-def increase_volume(step=1):
+def increase_volume(step=5):
     current = get_volume()
     # Calculate new volume but don't exceed 90%
-    new_volume = min(100, current + step)
+    new_volume = min(90, current + step)
     set_volume(new_volume)
 
-def decrease_volume(step=10):
+def decrease_volume(step=5):
     current = get_volume()
     # Ensure volume doesn't go below 0
     new_volume = max(0, current - step)
@@ -304,6 +304,8 @@ def asl_processing_loop():
                     
                     # Listen for audio and store transcript in a text file
                     translator_device.vad_active = True
+                    with open("als_speech_audio_transcription.txt", 'w') as file:
+                        pass
                     transcript = translator_device.listen_and_save_transcription(file_path="als_speech_audio_transcription.txt")
                     translator_device.vad_active = False
                     sentence = []
@@ -315,6 +317,7 @@ def asl_processing_loop():
                     sentence = []
                     sequence = []
                     predictions = []
+                    transcript = None
                     nothing_count = 0
 
 
