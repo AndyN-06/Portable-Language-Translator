@@ -358,6 +358,7 @@ def asl_processing_loop():
             if cap is not None:
                 cap.release()
                 cap = None
+            shared.ui_mode = "TEXT"
             time.sleep(0.1)
 
 asl_proc_thread = threading.Thread(target=asl_processing_loop, daemon=True)
