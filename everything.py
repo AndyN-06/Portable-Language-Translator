@@ -146,7 +146,7 @@ def set_volume(level):
     capped_level = min(90, max(0, level))
     os.system(f"amixer -D pulse sset Master {capped_level}%")
 
-def increase_volume(step=10):
+def increase_volume(step=1):
     current = get_volume()
     # Calculate new volume but don't exceed 90%
     new_volume = min(90, current + step)
