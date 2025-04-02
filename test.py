@@ -69,6 +69,7 @@ predictions = []
 last_prediction_time = 0
 min_prediction_interval = 0.5
 last_prediction = None
+sentence = []
 
 while True:
     ret, frame = cap.read()
@@ -98,30 +99,46 @@ while True:
         if confidence > threshold:
             # Allow "nothing" to be detected anytime
             if predicted_action == "nothing":
-                prediction_text = f"{predicted_action} ({confidence:.2f})"
+                prediction_text = f"Current: {predicted_action} ({confidence:.2f})"
                 last_prediction = predicted_action
                 last_prediction_time = current_time
             # For other gestures, check the time interval
             elif time_since_last_prediction >= min_prediction_interval:
-                prediction_text = f"{predicted_action} ({confidence:.2f})"
+                prediction_text = f"Current: {predicted_action} ({confidence:.2f})"
                 last_prediction = predicted_action
                 last_prediction_time = current_time
+                if predicted_action != "nothing":
+                    # Add to sentence if it's not already the last word
+                    if not sentence or sentence[-1] != predicted_action:
+                        sentence.append(predicted_action)
             else:
                 # Keep showing the previous prediction
-                prediction_text = f"{last_prediction} ({confidence:.2f})" if last_prediction else "Waiting..."
+                prediction_text = f"Current: {last_prediction} ({confidence:.2f})" if last_prediction else "Waiting..."
         else:
             prediction_text = "Waiting..."
             
-        # Display prediction
+        # Display current prediction
         cv2.putText(image, prediction_text, (10, 30), 
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        
+        # Display formed sentence
+        sentence_text = f"Sentence: {' '.join(sentence)}"
+        cv2.putText(image, sentence_text, (10, 70),  # Position below the prediction
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        
+        # Optional: Add instructions for clearing sentence
+        cv2.putText(image, "Press 'c' to clear sentence", (10, image.shape[0] - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
     
     # Show frame
     cv2.imshow('ASL Detection', image)
     
-    # Break loop with 'q'
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    # Handle keyboard input
+    key = cv2.waitKey(1) & 0xFF
+    if key == ord('q'):
         break
+    elif key == ord('c'):
+        sentence.clear()  # Clear the sentence when 'c' is pressed
 
 cap.release()
 cv2.destroyAllWindows()
