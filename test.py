@@ -63,6 +63,13 @@ def predict(sequence):
     return interpreter.get_tensor(output_details[0]['index'])[0]
 
 # Main loop
+# Update the global variables
+HISTORY_LENGTH = 10  # Increased from 5
+MIN_CONSISTENT_PREDICTIONS = 6  # Increased from 3
+TRANSITION_FRAMES = 15  # Add transition frames constant
+threshold = 0.9  # Match threshold from everything.py
+
+# Main loop variables
 cap = cv2.VideoCapture(0)
 sequence = []
 predictions = []
@@ -70,9 +77,9 @@ last_prediction_time = 0
 min_prediction_interval = 1
 last_prediction = None
 sentence = []
-prediction_history = []  # Store recent predictions
-HISTORY_LENGTH = 5  # Number of predictions to consider
-MIN_CONSISTENT_PREDICTIONS = 3  # Minimum number of same predictions needed
+prediction_history = []
+transition_counter = 0  # Add transition counter
+
 
 while True:
     ret, frame = cap.read()
