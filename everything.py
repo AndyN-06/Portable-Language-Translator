@@ -247,9 +247,9 @@ frame_count = 0
 start_time = time.time()
 latest_frame = None
 last_prediction_time = 0
-min_prediction_interval = 0.5
-HISTORY_LENGTH = 4  # Number of predictions to consider
-MIN_CONSISTENT_PREDICTIONS = 2  # Minimum number of same predictions needed
+min_prediction_interval = 0.77
+HISTORY_LENGTH = 5  # Number of predictions to consider
+MIN_CONSISTENT_PREDICTIONS = 4  # Minimum number of same predictions needed
 prediction_history = []  # Store recent predictions
 
 # hands_instance = mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.8)
