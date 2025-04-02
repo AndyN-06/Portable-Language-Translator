@@ -8,12 +8,16 @@ from virtual_keyboard import VirtualKeyboard
 import re
 import cv2
 import os
+from translator_device import TranslatorDevice  # Assuming the device code is in translator_device.py
+
 
 class MainWindow(QMainWindow):
-    def __init__(self, filepath):
+    def __init__(self, filepath, translator_device):
         super().__init__()
 
         self.file_path = filepath
+        
+
         self.setWindowTitle("PyQt Tab Example")
         self.setGeometry(100, 100, 800, 500)
         
@@ -119,13 +123,33 @@ class MainWindow(QMainWindow):
         self.scan_networks()
 
     def setupTab3(self):
+        # Layout to hold widgets
         layout = QVBoxLayout()
-        label = QLabel("About this application")
-        label.setFont(QFont("Arial", 16))
-        label.setAlignment(Qt.AlignCenter)
-        label.setStyleSheet("color: black;")
-        layout.addWidget(label)
-        self.tab3.setStyleSheet("background-color: #fff;")
+
+        # Label for the language dropdown
+        self.language_label = QLabel("Select Base Language:")
+        layout.addWidget(self.language_label)
+
+        # Language dropdown
+        self.language_combo = QComboBox(self)
+        self.language_combo.addItems(["English", "Spanish", "Korean"])
+        layout.addWidget(self.language_combo)
+
+        # Label for the gender dropdown
+        self.gender_label = QLabel("Select Voice Gender:")
+        layout.addWidget(self.gender_label)
+
+        # Gender dropdown
+        self.gender_combo = QComboBox(self)
+        self.gender_combo.addItems(["Male", "Female"])
+        layout.addWidget(self.gender_combo)
+
+        # Apply button to update settings
+        self.apply_button = QPushButton("Apply Settings", self)
+        self.apply_button.clicked.connect(self.apply_settings)
+        layout.addWidget(self.apply_button)
+
+        # Set the layout
         self.tab3.setLayout(layout)
 
     def scan_networks(self):
@@ -234,7 +258,8 @@ if __name__ == "__main__":
     with open(file_path, 'w') as file:
         pass  # clear the file contents
 
+    translator_device = TranslatorDevice()
     app = QApplication(sys.argv)
-    window = MainWindow(file_path)
+    window = MainWindow(file_path, translator_device)
     window.show()
     sys.exit(app.exec_())
