@@ -183,8 +183,8 @@ class TranslatorDevice:
             else:
                 target_language = self.mode[0]
                 
-        with open("als_speech_audio_transcription.txt", 'w') as file:
-            pass        
+        # with open("als_speech_audio_transcription.txt", 'w') as file:
+        #     pass        
 
         translated_text = self.translate_text(full_transcript, target_language[:2])
         
