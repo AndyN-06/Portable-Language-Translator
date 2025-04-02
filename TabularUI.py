@@ -21,11 +21,9 @@ class MainWindow(QMainWindow):
     
     def initUI(self):
         self.tabs = QTabWidget()
-        self.tabs.setStyleSheet("""
-            QTabWidget::pane { border: 1px solid #aaa; background: #ddd; }
-            QTabBar::tab { padding: 6px; font-size: 10px; background: #eee; color: black; border: 1px solid #aaa; }
-            QTabBar::tab:selected { background: #ccc; }
-        """)
+        self.tabs.setStyleSheet("""QTabWidget::pane { border: 1px solid #aaa; background: #ddd; }
+                                  QTabBar::tab { padding: 6px; font-size: 10px; background: #eee; color: black; border: 1px solid #aaa; }
+                                  QTabBar::tab:selected { background: #ccc; }""")
         
         # Create Tabs
         self.tab1 = QWidget()
@@ -72,7 +70,7 @@ class MainWindow(QMainWindow):
         self.text_edit.setStyleSheet("font-size: 50pt;")
 
         self.load_text()
-    
+
     def setupTab2(self):
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignTop)
@@ -119,7 +117,7 @@ class MainWindow(QMainWindow):
         self.tab2.setStyleSheet("background-color: #fff;")
         self.tab2.setLayout(layout)
         self.scan_networks()
-    
+
     def setupTab3(self):
         layout = QVBoxLayout()
         label = QLabel("About this application")
@@ -129,7 +127,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(label)
         self.tab3.setStyleSheet("background-color: #fff;")
         self.tab3.setLayout(layout)
-    
+
     def scan_networks(self):
         self.networksBox.clear()
         networks = self.get_available_networks()
