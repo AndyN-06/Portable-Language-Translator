@@ -52,7 +52,7 @@ class MainWindow(QMainWindow):
         # Initially, show camera view only
         main_layout.addWidget(self.video_label)
         main_layout.addWidget(self.text_edit)
-        self.setLayout(main_layout)
+        self.tab1.setLayout(main_layout)
 
         # Set up timers
         self.camera_timer = QTimer()
