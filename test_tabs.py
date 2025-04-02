@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QL
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from virtual_keyboard import VirtualKeyboard
-import regex
+import re
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -135,7 +135,7 @@ class MainWindow(QMainWindow):
                 print("Raw nmcli output:\n", result)  # Debugging
                 matches = re.findall(r'(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}\s+(.+?)\s+Infra', data)
                 networks = set(ssid.strip() for ssid in matches)
-                
+
             return list(set(networks))
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to scan networks: {e}")
