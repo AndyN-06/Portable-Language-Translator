@@ -132,6 +132,7 @@ def asl_mode_logic():
     print("Switched to ASL Mode. Camera activated for gesture detection.")
     translator_device.active = False
     translator_device.vad_active = False
+    shared.ui_mode = "CAMERA"
 
 translator_thread = threading.Thread(target=translator_device.start, daemon=True)
 translator_thread.start()
@@ -205,6 +206,7 @@ def change_mode():
         print("Mode changed to SPEECH")
         translator_device.reset()
         translator_device.active = True
+        shared.ui_mode = "TEXT"
     else:
         mode = "ASL"
         with open(file_path, 'w') as file:
@@ -213,6 +215,7 @@ def change_mode():
         if cap is None:
             cap = cv2.VideoCapture(0)
         print("Mode changed to ASL")
+        shared.ui_mode = "CAMERA"
 
     shared.mode = mode
 
@@ -362,8 +365,7 @@ def asl_processing_loop():
                 cap.release()
                 cap = None
             shared.ui_mode = "TEXT"
-            # with open("als_speech_audio_transcription.txt", 'w') as file:
-            #     pass
+
             time.sleep(0.1)
 
 asl_proc_thread = threading.Thread(target=asl_processing_loop, daemon=True)
