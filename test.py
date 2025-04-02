@@ -62,13 +62,13 @@ def predict(sequence):
     interpreter.invoke()
     return interpreter.get_tensor(output_details[0]['index'])[0]
 
-
 # Main loop
 cap = cv2.VideoCapture(0)
 sequence = []
 predictions = []
-last_prediction_time = 0  # Add this to track timing
-min_prediction_interval = 0.5  # Minimum time between predictions in seconds
+last_prediction_time = 0
+min_prediction_interval = 0.5
+last_prediction = None
 
 while True:
     ret, frame = cap.read()
@@ -90,17 +90,25 @@ while True:
         res = predict(np.array(sequence))
         predicted_idx = np.argmax(res)
         confidence = res[predicted_idx]
+        predicted_action = actions[predicted_idx]
         
         current_time = time.time()
         time_since_last_prediction = current_time - last_prediction_time
         
         if confidence > threshold:
-            if time_since_last_prediction >= min_prediction_interval:
-                prediction_text = f"{actions[predicted_idx]} ({confidence:.2f})"
+            # Allow "nothing" to be detected anytime
+            if predicted_action == "nothing":
+                prediction_text = f"{predicted_action} ({confidence:.2f})"
+                last_prediction = predicted_action
+                last_prediction_time = current_time
+            # For other gestures, check the time interval
+            elif time_since_last_prediction >= min_prediction_interval:
+                prediction_text = f"{predicted_action} ({confidence:.2f})"
+                last_prediction = predicted_action
                 last_prediction_time = current_time
             else:
                 # Keep showing the previous prediction
-                pass
+                prediction_text = f"{last_prediction} ({confidence:.2f})" if last_prediction else "Waiting..."
         else:
             prediction_text = "Waiting..."
             
@@ -114,3 +122,6 @@ while True:
     # Break loop with 'q'
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+
+cap.release()
+cv2.destroyAllWindows()
