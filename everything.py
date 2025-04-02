@@ -241,21 +241,24 @@ button_down.when_pressed = volume_down
 sequence = []
 predictions = []
 sentence = []
-threshold = 0.8
+threshold = 0.9
 last_detection_time = time.time()
 frame_count = 0
 start_time = time.time()
 latest_frame = None
 last_prediction_time = 0
-min_prediction_interval = 0.5
+min_prediction_interval = 1
+HISTORY_LENGTH = 5  # Number of predictions to consider
+MIN_CONSISTENT_PREDICTIONS = 3  # Minimum number of same predictions needed
+prediction_history = []  # Store recent predictions
 
 # hands_instance = mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.8)
 
 def asl_processing_loop():
-    # count number of nothings
     nothing_count = 0
+    global cap, sequence, predictions, sentence, last_detection_time, frame_count
+    global start_time, latest_frame, last_prediction_time, prediction_history
 
-    global cap, sequence, predictions, sentence, last_detection_time, frame_count, start_time, latest_frame, last_prediction_time
     while True:
         if mode == "ASL":
             if cap is None:
@@ -264,115 +267,75 @@ def asl_processing_loop():
             if not ret:
                 continue
             
-            with open("als_speech_audio_transcription.txt", 'w') as file:
-                pass
-            
             shared.latest_frame = frame.copy()
             frame_count += 1
             
-            # Use holistic model instead of hands_instance
             image, results = mediapipe_detection(frame, holistic)
             draw_styled_landmarks(image, results)
 
             keypoints = extract_keypoints(results)
             sequence.append(keypoints)
-            sequence = sequence[-30:]  # Keep the last 30 frames
+            sequence = sequence[-30:]
 
-            # old version
-            # if len(sequence) == 30 and not sequence_queue.full():
-            #     sequence_queue.put_nowait(np.array(sequence))
-
-            # throttle and only detect every 5 frames
-            if len(sequence) >= 30 and frame_count & 5 == 0 and not sequence_queue.full():
+            # Only process every 5th frame for performance
+            if len(sequence) >= 30 and frame_count % 5 == 0 and not sequence_queue.full():
                 sequence_queue.put_nowait(np.array(sequence[-30:]))
 
             if not result_queue.empty():
                 predicted_action, confidence = result_queue.get_nowait()
-                predictions.append(predicted_action)
                 action_name = actions[predicted_action]
                 current_time = time.time()
                 time_since_last_prediction = current_time - last_prediction_time
-                
-                if action_name != "nothing":
-                    # Apply time threshold for non-"nothing" gestures
-                    if time_since_last_prediction >= min_prediction_interval:
-                        nothing_count = 0  # reset counter on valid gesture
-                        if not sentence or (action_name != sentence[-1]):
+
+                # Add prediction to history
+                prediction_history.append(action_name)
+                prediction_history = prediction_history[-HISTORY_LENGTH:]
+
+                if confidence > threshold:
+                    # Count occurrences in history
+                    prediction_counts = prediction_history.count(action_name)
+
+                    if action_name == "nothing":
+                        nothing_count += 1
+                        last_prediction_time = current_time
+                    # For other gestures, check time interval and consistency
+                    elif (time_since_last_prediction >= min_prediction_interval and 
+                          prediction_counts >= MIN_CONSISTENT_PREDICTIONS):
+                        nothing_count = 0  # Reset counter on valid gesture
+                        if not sentence or action_name != sentence[-1]:
                             sentence.append(action_name)
                             last_prediction_time = current_time
-                else:
-                    # "nothing" gesture bypasses the time threshold
-                    nothing_count += 1
+                            prediction_history.clear()  # Clear history after adding to sentence
 
-                # When two consecutive "nothing" gestures follow a valid gesture,
-                # trigger the synthesis.
+                # Trigger synthesis on consecutive "nothing" gestures
                 if nothing_count >= 2 and any(word != "nothing" for word in sentence):
                     text_out = ' '.join(sentence)
                     translator_device.synthesize_speech(text_out, translator_device.base_language)
                     shared.ui_mode = "TEXT"
 
-                    sentence = []
-                    sequence = []
-                    predictions = []
-                    
-                    # Listen for audio and store transcript in a text file
+                    # Reset all tracking variables
+                    sentence.clear()
+                    sequence.clear()
+                    predictions.clear()
+                    prediction_history.clear()
+                    nothing_count = 0
+
+                    # Handle audio transcription
                     translator_device.vad_active = True
-                    with open("als_speech_audio_transcription.txt", 'w') as file:
-                        pass
-                    transcript = translator_device.listen_and_save_transcription(file_path="als_speech_audio_transcription.txt")
+                    transcript = translator_device.listen_and_save_transcription(
+                        file_path="als_speech_audio_transcription.txt")
                     translator_device.vad_active = False
-                    sentence = []
 
                     time.sleep(3)
                     shared.ui_mode = "CAMERA"
 
-                    # Clear the sentence and reset the nothing counter for the next sequence
-                    sentence = []
-                    sequence = []
-                    predictions = []
-                    transcript = None
-                    nothing_count = 0
-
-
-            # if not result_queue.empty():
-            #     predicted_action, confidence = result_queue.get_nowait()
-            #     predictions.append(predicted_action)
-            #     if (len(predictions) > 10 and 
-            #         np.unique(predictions[-10:])[0] == predicted_action and 
-            #         confidence > threshold):
-            #         action_name = actions[predicted_action]
-            #         if not sentence or (action_name != sentence[-1]):
-            #             sentence.append(action_name)
-            #             last_detection_time = time.time()
-            #     if len(sentence) > 3:
-            #         sentence = sentence[-3:]
-            
-            # if time.time() - last_detection_time > 2 and sentence:
-            #     # When ASL gesture detected, synthesize speech and write to text file
-            #     text_out = ' '.join(sentence)
-            #     translator_device.synthesize_speech(text_out, translator_device.base_language)
-
-            #     shared.ui_mode = "TEXT"
-
-            #     # Listen for audio and store transcript in a text file
-            #     translator_device.vad_active = True
-            #     transcript = translator_device.listen_and_save_transcription(file_path="als_speech_audio_transcription.txt")
-            #     translator_device.vad_active = False
-            #     sentence = []
-
-            #     time.sleep(3)
-            #     shared.ui_mode = "CAMERA"
-
-
-            # Sleep briefly to yield control (adjust as needed)
             time.sleep(0.03)
         else:
-            # When in speech mode, ensure the camera is released
+            # Speech mode handling
             if cap is not None:
                 cap.release()
                 cap = None
             shared.ui_mode = "TEXT"
-
             time.sleep(0.1)
 
 asl_proc_thread = threading.Thread(target=asl_processing_loop, daemon=True)
