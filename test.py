@@ -2,6 +2,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import tensorflow as tf
+import time
 
 # Setup
 actions = np.array(["hello", "thanks", "nothing", "help", "yes", "bathroom"])
@@ -61,10 +62,13 @@ def predict(sequence):
     interpreter.invoke()
     return interpreter.get_tensor(output_details[0]['index'])[0]
 
+
 # Main loop
 cap = cv2.VideoCapture(0)
 sequence = []
 predictions = []
+last_prediction_time = 0  # Add this to track timing
+min_prediction_interval = 0.5  # Minimum time between predictions in seconds
 
 while True:
     ret, frame = cap.read()
@@ -87,8 +91,16 @@ while True:
         predicted_idx = np.argmax(res)
         confidence = res[predicted_idx]
         
+        current_time = time.time()
+        time_since_last_prediction = current_time - last_prediction_time
+        
         if confidence > threshold:
-            prediction_text = f"{actions[predicted_idx]} ({confidence:.2f})"
+            if time_since_last_prediction >= min_prediction_interval:
+                prediction_text = f"{actions[predicted_idx]} ({confidence:.2f})"
+                last_prediction_time = current_time
+            else:
+                # Keep showing the previous prediction
+                pass
         else:
             prediction_text = "Waiting..."
             
@@ -102,6 +114,3 @@ while True:
     # Break loop with 'q'
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-
-cap.release()
-cv2.destroyAllWindows()
