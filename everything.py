@@ -13,7 +13,7 @@ import sounddevice as sd
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from gpiozero import Button
-from ui import CameraTextViewer
+from TabularUI import MainWindow
 from PyQt5.QtWidgets import QApplication
 from translator_device import TranslatorDevice  # Adjust the import path as needed
 from shared import latest_frame
@@ -389,7 +389,7 @@ if __name__ == "__main__":
         pass  # clear the file contents
 
     app_qt = QApplication(sys.argv)
-    window = CameraTextViewer(file_path)
+    window = MainWindow(file_path, translator_device)
     window.show()
     try:
         exit_code = app_qt.exec_()
