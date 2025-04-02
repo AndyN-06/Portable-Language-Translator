@@ -5,6 +5,7 @@ import os
 from PyQt5.QtCore import QTimer, Qt, QFileSystemWatcher
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QTextEdit, QHBoxLayout
+
 # from shared import latest_frame
 
 class CameraTextViewer(QWidget):

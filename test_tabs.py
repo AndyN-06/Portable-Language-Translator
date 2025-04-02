@@ -1,16 +1,19 @@
 import sys
 import subprocess
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QTabWidget, QFrame,
-                             QPushButton, QComboBox, QLineEdit, QMessageBox, QHBoxLayout)
-from PyQt5.QtGui import QFont
-from PyQt5.QtCore import Qt
+                             QPushButton, QComboBox, QLineEdit, QMessageBox, QHBoxLayout, QTextEdit)
+from PyQt5.QtGui import QFont, QImage, QPixmap
+from PyQt5.QtCore import QTimer, Qt, QFileSystemWatcher
 from virtual_keyboard import VirtualKeyboard
 import re
+import cv2
+import os
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, filepath):
         super().__init__()
-        
+
+        self.file_path = filepath
         self.setWindowTitle("PyQt Tab Example")
         self.setGeometry(100, 100, 800, 500)
         
@@ -42,14 +45,33 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.tabs)
     
     def setupTab1(self):
-        layout = QVBoxLayout()
-        label = QLabel("Welcome to the Home Tab")
-        label.setFont(QFont("Arial", 16))
-        label.setAlignment(Qt.AlignCenter)
-        label.setStyleSheet("color: black;")
-        layout.addWidget(label)
-        self.tab1.setStyleSheet("background-color: #fff;")
-        self.tab1.setLayout(layout)
+        main_layout = QHBoxLayout()
+        self.video_label = QLabel(self)
+        self.video_label.setAlignment(Qt.AlignCenter)
+        self.text_edit = QTextEdit()
+        self.text_edit.setReadOnly(True)
+
+        # Initially, show camera view only
+        main_layout.addWidget(self.video_label)
+        main_layout.addWidget(self.text_edit)
+        self.setLayout(main_layout)
+
+        # Set up timers
+        self.camera_timer = QTimer()
+        self.camera_timer.timeout.connect(self.update_camera)
+        self.camera_timer.start(30)  # Update every 30ms
+
+        self.mode_timer = QTimer()
+        self.mode_timer.timeout.connect(self.update_ui_mode)
+        self.mode_timer.start(500)  # Check UI mode every 500ms
+
+        self.file_watcher = QFileSystemWatcher()
+        self.file_watcher.addPath(self.file_path)
+        self.file_watcher.fileChanged.connect(self.load_text)
+
+        self.text_edit.setStyleSheet("font-size: 50pt;")
+
+        self.load_text()
     
     def setupTab2(self):
         layout = QVBoxLayout()
@@ -131,7 +153,7 @@ class MainWindow(QMainWindow):
 
                 return list(set(networks))
             else:
-                result = subprocess.check_output(["nmcli", "dev", "wifi", "list"], encoding="utf-8")
+                result = subprocess.check_output(["nmcli", "dev", "wifi", "list"], encoding="utf-8", errors="ignore")
                 print("Raw nmcli output:\n", result)  # Debugging
                 matches = re.findall(r'(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}\s+(.+?)\s+Infra', result)
                 networks = set(ssid.strip() for ssid in matches)
@@ -172,8 +194,49 @@ class MainWindow(QMainWindow):
         except subprocess.CalledProcessError as e:
             QMessageBox.critical(self, "Error", f"Failed to connect: {e}")
 
+    def update_camera(self):
+        """Display the latest camera frame if in CAMERA mode."""
+        from shared import latest_frame, ui_mode
+        if ui_mode == "CAMERA" and latest_frame is not None:
+            frame = latest_frame
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            h, w, ch = frame.shape
+            bytes_per_line = ch * w
+            qt_image = QImage(frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
+            pixmap = QPixmap.fromImage(qt_image).scaled(self.video_label.width(),
+                                                        self.video_label.height(),
+                                                        Qt.KeepAspectRatio)
+            self.video_label.setPixmap(pixmap)
+        else:
+            self.video_label.clear()
+
+    def update_ui_mode(self):
+        """Switch between camera view and text view based on the shared ui_mode variable."""
+        from shared import ui_mode
+        if ui_mode == "CAMERA":
+            self.video_label.show()
+            self.text_edit.hide()
+        elif ui_mode == "TEXT":
+            self.video_label.hide()
+            self.text_edit.show()
+
+    def load_text(self):
+        if os.path.exists(self.file_path):
+            try:
+                with open(self.file_path, "r", encoding="utf-8") as file:
+                    content = file.read()
+                    self.text_edit.setText(content)
+            except Exception as e:
+                self.text_edit.setText(f"Error loading file: {e}")
+        else:
+            self.text_edit.setText("File not found.")
+
 if __name__ == "__main__":
+    file_path = "als_speech_audio_transcription.txt"  # This file is updated by the ASL processing thread
+    with open(file_path, 'w') as file:
+        pass  # clear the file contents
+
     app = QApplication(sys.argv)
-    window = MainWindow()
+    window = MainWindow(file_path)
     window.show()
     sys.exit(app.exec_())
