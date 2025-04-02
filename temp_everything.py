@@ -246,8 +246,6 @@ last_detection_time = time.time()
 frame_count = 0
 start_time = time.time()
 latest_frame = None
-last_prediction_time = 0
-min_prediction_interval = 0.5
 
 # hands_instance = mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.8)
 
@@ -290,19 +288,14 @@ def asl_processing_loop():
                 predicted_action, confidence = result_queue.get_nowait()
                 predictions.append(predicted_action)
                 action_name = actions[predicted_action]
-                current_time = time.time()
-                time_since_last_prediction = current_time - last_prediction_time
                 
                 if action_name != "nothing":
-                    # Apply time threshold for non-"nothing" gestures
-                    if time_since_last_prediction >= min_prediction_interval:
-                        nothing_count = 0  # reset counter on valid gesture
-                        if not sentence or (action_name != sentence[-1]):
-                            sentence.append(action_name)
-                            last_prediction_time = current_time
+                    nothing_count = 0  # reset counter on valid gesture
+                    # Only add if this gesture is not a duplicate of the last one
+                    if not sentence or (action_name != sentence[-1]):
+                        sentence.append(action_name)
                 else:
-                    # "nothing" gesture bypasses the time threshold
-                    nothing_count += 1
+                    nothing_count += 1  # increment counter for a "nothing" gesture
 
                 # When two consecutive "nothing" gestures follow a valid gesture,
                 # trigger the synthesis.
