@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QL
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from virtual_keyboard import VirtualKeyboard
+import regex
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -62,12 +63,11 @@ class MainWindow(QMainWindow):
         
         rowLayout = QHBoxLayout()
         
-        # Change QComboBox to QLineEdit
-        self.networksInput = QLineEdit()
-        self.networksInput.setPlaceholderText("Enter network name")
-        self.networksInput.setStyleSheet("background-color: #fff; color: black; border: 1px solid #aaa;")
-        rowLayout.addWidget(QLabel("Network:", self))
-        rowLayout.addWidget(self.networksInput)
+        self.networksBox = QComboBox()
+        self.networksBox.setEditable(True)  # Allow keyboard input
+        self.networksBox.setStyleSheet("background-color: #fff; color: black; border: 1px solid #aaa;")
+        rowLayout.addWidget(QLabel("Select Network:", self))
+        rowLayout.addWidget(self.networksBox)
         
         self.passwordInput = QLineEdit()
         self.passwordInput.setEchoMode(QLineEdit.Password)
@@ -79,6 +79,10 @@ class MainWindow(QMainWindow):
         
         buttonLayout = QHBoxLayout()
         
+        self.refreshButton = QPushButton("Refresh")
+        self.refreshButton.setStyleSheet("background-color: #ccc; color: black; border-radius: 5px; padding: 5px;")
+        self.refreshButton.clicked.connect(self.scan_networks)
+        buttonLayout.addWidget(self.refreshButton)
         
         self.connectButton = QPushButton("Connect")
         self.connectButton.setStyleSheet("background-color: #ccc; color: black; border-radius: 5px; padding: 5px;")
@@ -92,6 +96,7 @@ class MainWindow(QMainWindow):
         
         self.tab2.setStyleSheet("background-color: #fff;")
         self.tab2.setLayout(layout)
+        self.scan_networks()
     
     def setupTab3(self):
         layout = QVBoxLayout()
@@ -103,8 +108,41 @@ class MainWindow(QMainWindow):
         self.tab3.setStyleSheet("background-color: #fff;")
         self.tab3.setLayout(layout)
     
+    def scan_networks(self):
+        self.networksBox.clear()
+        networks = self.get_available_networks()
+        if networks:
+            self.networksBox.addItems(networks)
+        else:
+            QMessageBox.warning(self, "Error", "No networks found.")
+    
+    def get_available_networks(self):
+        try:
+            if sys.platform == "win32":
+                result = subprocess.check_output(["netsh", "wlan", "show", "network"], encoding="utf-8", errors="ignore")
+                print("Raw netsh output:\n", result)  # Debugging
+
+                networks = []
+                for line in result.split('\n'):
+                    if "SSID" in line and ":" in line:
+                        ssid = line.split(':', 1)[1].strip()
+                        ssid = ssid.replace("?T", "'")  # Fix apostrophe
+                        networks.append(ssid)
+
+                return list(set(networks))
+            else:
+                result = subprocess.check_output(["nmcli", "dev", "wifi", "list"], encoding="utf-8")
+                print("Raw nmcli output:\n", result)  # Debugging
+                matches = re.findall(r'(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}\s+(.+?)\s+Infra', data)
+                networks = set(ssid.strip() for ssid in matches)
+                
+            return list(set(networks))
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to scan networks: {e}")
+            return []
+ 
     def connect_to_network(self):
-        ssid = self.networksInput.text()  # Fetch the selected SSID from the ComboBox
+        ssid = self.networksBox.currentText()  # Fetch the selected SSID from the ComboBox
         password = self.passwordInput.text().strip()
 
         if not ssid:
