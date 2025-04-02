@@ -71,34 +71,62 @@ class WifiConnector(QWidget):
     def get_available_networks(self):
         try:
             if sys.platform == "win32":
-                result = subprocess.check_output(["netsh", "wlan", "show", "network"], encoding="utf-8")
-                networks = [line.split(':')[1].strip() for line in result.split('\n') if "SSID" in line]
+                result = subprocess.check_output(["netsh", "wlan", "show", "network"], encoding="utf-8", errors="ignore")
+                print("Raw netsh output:\n", result)  # Debugging
+
+                networks = []
+                for line in result.split('\n'):
+                    if "SSID" in line and ":" in line:
+                        ssid = line.split(':', 1)[1].strip()
+                        ssid = ssid.replace("?T", "'")  # Fix apostrophe
+                        networks.append(ssid)
+
+                return list(set(networks))
             else:
                 result = subprocess.check_output(["nmcli", "dev", "wifi", "list"], encoding="utf-8")
+                print("Raw nmcli output:\n", result)  # Debugging
                 networks = [line.split()[0] for line in result.split('\n')[1:] if line]
             return list(set(networks))
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to scan networks: {e}")
             return []
-    
+ 
     def connect_to_network(self):
-        ssid = self.networksBox.currentText()
-        password = self.passwordInput.text()
+        ssid = self.networksBox.currentText()  # Fetch the selected SSID from the ComboBox
+        password = self.passwordInput.text().strip()
+
         if not ssid:
             QMessageBox.warning(self, "Error", "Please select a network.")
             return
-        
+
+        if not password:
+            QMessageBox.warning(self, "Error", "Please enter a password.")
+            return
+
         try:
-            if sys.platform == "win32":
-                cmd = ["netsh", "wlan", "connect", f"name={ssid}"]
-                if password:
-                    cmd.append(f"key={password}")
+            if sys.platform == "win32":  # If Windows
+                # Use netsh command to connect to the network
+                cmd = f'netsh wlan connect name="{ssid}"'
+                print("Executing (Windows):", cmd)  # Debugging
+                subprocess.run(cmd, shell=True, check=True)
+
+            elif sys.platform != "win32":  # If Raspberry Pi (Linux)
+                # Use nmcli command to connect to the selected network with the password
+                cmd = f'nmcli dev wifi connect "{ssid}" password "{password}"'
+                print("Executing (Linux):", cmd)  # Debugging
+                subprocess.run(cmd, shell=True, check=True)
+
             else:
-                cmd = ["nmcli", "dev", "wifi", "connect", ssid, "password", password]
-            subprocess.run(cmd, check=True)
-            QMessageBox.information(self, "Success", f"Connected to {ssid}.")
-        except Exception as e:
+                print("This script is only for Windows or Linux (Raspberry Pi).")
+                return
+
+            print(f"Successfully connected to {ssid}.")
+            QMessageBox.information(self, "Success", f"Successfully connected to {ssid}.")
+
+        except subprocess.CalledProcessError as e:
             QMessageBox.critical(self, "Error", f"Failed to connect: {e}")
+
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

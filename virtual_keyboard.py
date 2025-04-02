@@ -11,7 +11,7 @@ class VirtualKeyboard(QWidget):
         self.initUI()
 
     def initUI(self):
-        self.setStyleSheet("background-color: #222; border-radius: 10px;")
+        self.setStyleSheet("background-color: #f0f0f0; border-radius: 10px;")
 
         layout = QVBoxLayout()
         self.keys = [
@@ -22,7 +22,7 @@ class VirtualKeyboard(QWidget):
         ]
 
         keyboard_frame = QFrame()
-        keyboard_frame.setStyleSheet("background-color: #333; border-radius: 10px; padding: 10px;")
+        keyboard_frame.setStyleSheet("background-color: #e0e0e0; border-radius: 10px; padding: 10px;")
         grid_layout = QGridLayout()
 
         for row_idx, row in enumerate(self.keys):
@@ -41,7 +41,7 @@ class VirtualKeyboard(QWidget):
     def key_pressed(self, key):
         shift_symbols = {
             '1': '!', '2': '@', '3': '#', '4': '$', '5': '%',
-            '6': '^', '7': '&&', '8': '*', '9': '(', '0': ')'
+            '6': '^', '7': '&', '8': '*', '9': '(', '0': ')'
         }
 
         if key == "␣":
@@ -74,7 +74,7 @@ class VirtualKeyboard(QWidget):
     def update_keys(self):
         shift_symbols = {
             '1': '!', '2': '@', '3': '#', '4': '$', '5': '%',
-            '6': '^', '7': '&&', '8': '*', '9': '(', '0': ')'
+            '6': '^', '7': '&', '8': '*', '9': '(', '0': ')'
         }
 
         for key, btn in self.buttons.items():
@@ -97,11 +97,11 @@ class VirtualKeyboard(QWidget):
     def get_button_style(self, key, shift=False, caps_lock=False):
         base_style = """
             QPushButton {
-                font-size: 20px; color: white; background-color: #444;
-                border-radius: 10px; border: 1px solid #555;
+                font-size: 20px; color: #333; background-color: #ddd;
+                border-radius: 10px; border: 1px solid #bbb;
             }
             QPushButton:pressed {
-                background-color: #666;
+                background-color: #bbb;
             }
         """
         if key == "↑":
