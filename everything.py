@@ -274,6 +274,8 @@ def asl_processing_loop():
             if not ret:
                 continue
             
+            frame = cv2.resize(frame, (800, 480))
+            
             image, results = mediapipe_detection(frame, holistic)
             draw_styled_landmarks(image, results)
 

@@ -49,6 +49,8 @@ class MainWindow(QMainWindow):
     def setupTab1(self):
         main_layout = QHBoxLayout()
         self.video_label = QLabel(self)
+        self.video_label.setMinimumSize(800, 480)
+        self.video_label.setMaximumSize(800, 480)
         self.video_label.setAlignment(Qt.AlignCenter)
         self.text_edit = QTextEdit()
         self.text_edit.setReadOnly(True)
