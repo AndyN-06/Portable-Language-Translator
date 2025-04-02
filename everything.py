@@ -255,7 +255,7 @@ def asl_processing_loop():
     # count number of nothings
     nothing_count = 0
 
-    global cap, sequence, predictions, sentence, last_detection_time, frame_count, start_time, latest_frame
+    global cap, sequence, predictions, sentence, last_detection_time, frame_count, start_time, latest_frame, last_prediction_time
     while True:
         if mode == "ASL":
             if cap is None:
