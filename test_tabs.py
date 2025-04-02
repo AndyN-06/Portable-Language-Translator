@@ -133,7 +133,7 @@ class MainWindow(QMainWindow):
             else:
                 result = subprocess.check_output(["nmcli", "dev", "wifi", "list"], encoding="utf-8")
                 print("Raw nmcli output:\n", result)  # Debugging
-                matches = re.findall(r'(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}\s+(.+?)\s+Infra', data)
+                matches = re.findall(r'(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}\s+(.+?)\s+Infra', result)
                 networks = set(ssid.strip() for ssid in matches)
 
             return list(set(networks))
