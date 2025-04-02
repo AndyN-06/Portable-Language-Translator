@@ -348,6 +348,9 @@ def asl_processing_loop():
                     predictions.clear()
                     prediction_history.clear()
                     nothing_count = 0
+                    
+                    with open(file_path, 'w') as file:
+                        pass  # Clear file contents
 
                     # Handle audio transcription
                     translator_device.vad_active = True
@@ -356,6 +359,8 @@ def asl_processing_loop():
                     translator_device.vad_active = False
 
                     time.sleep(3)
+                    with open(file_path, 'w') as file:
+                        pass
                     shared.ui_mode = "CAMERA"
 
             time.sleep(0.03)
