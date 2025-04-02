@@ -182,9 +182,16 @@ class TranslatorDevice:
                 target_language = self.mode[1]
             else:
                 target_language = self.mode[0]
+                
+        with open("als_speech_audio_transcription.txt", 'w') as file:
+            pass        
 
         translated_text = self.translate_text(full_transcript, target_language[:2])
+        
         print(f"Translated text: {translated_text}")
+        
+        with open("als_speech_audio_transcription.txt", "w", encoding="utf-8") as f:
+            f.write(translated_text)
 
         playback_start_time = time.time()
         print(f"Total time from sending audio to playback: {playback_start_time - start_time:.2f} seconds")

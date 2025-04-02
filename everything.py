@@ -259,6 +259,9 @@ def asl_processing_loop():
             if not ret:
                 continue
             
+            with open("als_speech_audio_transcription.txt", 'w') as file:
+                pass
+            
             shared.latest_frame = frame.copy()
             frame_count += 1
             
@@ -359,6 +362,8 @@ def asl_processing_loop():
                 cap.release()
                 cap = None
             shared.ui_mode = "TEXT"
+            with open("als_speech_audio_transcription.txt", 'w') as file:
+                pass
             time.sleep(0.1)
 
 asl_proc_thread = threading.Thread(target=asl_processing_loop, daemon=True)
