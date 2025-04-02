@@ -16,6 +16,7 @@ from pydub import AudioSegment
 import time
 from pydub.playback import _play_with_simpleaudio as play
 import pygame
+import html
 
 # Set your environment variable for Google Cloud credentials
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/home/plt/Desktop/optimum-reactor-449320-e8-dcb220f309a5.json'
@@ -133,7 +134,7 @@ class TranslatorDevice:
     def translate_text(self, text, target_language):
         """Translate the text to the target language using Google Cloud Translation API."""
         result = self.translate_client.translate(text, target_language=target_language)
-        translated_text = result["translatedText"]
+        translated_text = html.unescape(result["translatedText"])
         return translated_text
 
     def transcribe_and_translate(self, audio_bytes):
