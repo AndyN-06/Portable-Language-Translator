@@ -123,34 +123,36 @@ class MainWindow(QMainWindow):
         self.scan_networks()
 
     def setupTab3(self):
-        # Layout to hold widgets
-        layout = QVBoxLayout()
+        pass
+        # # Layout to hold widgets
+        # layout = QVBoxLayout()
 
-        # Label for the language dropdown
-        self.language_label = QLabel("Select Base Language:")
-        layout.addWidget(self.language_label)
+        # # Label for the language dropdown
+        # self.language_label = QLabel("Select Base Language:")
+        # layout.addWidget(self.language_label)
 
-        # Language dropdown
-        self.language_combo = QComboBox(self)
-        self.language_combo.addItems(["English", "Spanish", "Korean"])
-        layout.addWidget(self.language_combo)
+        # # Language dropdown
+        # self.language_combo = QComboBox(self)
+        # self.language_combo.addItems(["English", "Spanish", "Korean"])
+        # layout.addWidget(self.language_combo)
 
-        # Label for the gender dropdown
-        self.gender_label = QLabel("Select Voice Gender:")
-        layout.addWidget(self.gender_label)
+        # # Label for the gender dropdown
+        # self.gender_label = QLabel("Select Voice Gender:")
+        # layout.addWidget(self.gender_label)
 
-        # Gender dropdown
-        self.gender_combo = QComboBox(self)
-        self.gender_combo.addItems(["Male", "Female"])
-        layout.addWidget(self.gender_combo)
+        # # Gender dropdown
+        # self.gender_combo = QComboBox(self)
+        # self.gender_combo.addItems(["Male", "Female"])
+        # layout.addWidget(self.gender_combo)
 
-        # Apply button to update settings
-        self.apply_button = QPushButton("Apply Settings", self)
-        self.apply_button.clicked.connect(self.apply_settings)
-        layout.addWidget(self.apply_button)
+        # # Apply button to update settings
+        # self.apply_button = QPushButton("Apply Settings", self)
+        # self.apply_button.clicked.connect(self.apply_settings)
+        # layout.addWidget(self.apply_button)
 
-        # Set the layout
-        self.tab3.setLayout(layout)
+        # # Set the layout
+        # self.tab3.setStyleSheet("background-color: #fff;")
+        # self.tab3.setLayout(layout)
 
     def scan_networks(self):
         self.networksBox.clear()
