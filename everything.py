@@ -248,10 +248,10 @@ start_time = time.time()
 latest_frame = None
 last_prediction_time = 0
 min_prediction_interval = 0.5
-HISTORY_LENGTH = 5  # Number of predictions to consider
-MIN_CONSISTENT_PREDICTIONS = 4  # Minimum number of same predictions needed
+HISTORY_LENGTH = 7  # Number of predictions to consider
+MIN_CONSISTENT_PREDICTIONS = 6  # Minimum number of same predictions needed
 prediction_history = []  # Store recent predictions
-TRANSITION_FRAMES = 20  # Add this new constant for gesture transition
+TRANSITION_FRAMES = 15  # Add this new constant for gesture transition
 
 transition_counter = 0
 
