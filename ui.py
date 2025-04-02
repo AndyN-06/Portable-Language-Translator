@@ -39,7 +39,7 @@ class CameraTextViewer(QWidget):
         self.file_watcher.addPath(self.file_path)
         self.file_watcher.fileChanged.connect(self.load_text)
 
-        self.text_edit.setStyleSheet("font-family: 'Noto Sans CJK KR', sans-serif; font-size: 50pt;")
+        self.text_edit.setStyleSheet("font-family: 'Noto Sans CJK KR', sans-serif, 'Malgun Gothic', 'Nanum Gothic', 'Arial Unicode MS'; font-size: 50pt;")
 
         self.load_text()
 
