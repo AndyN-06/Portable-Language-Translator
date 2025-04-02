@@ -70,6 +70,9 @@ last_prediction_time = 0
 min_prediction_interval = 0.5
 last_prediction = None
 sentence = []
+prediction_history = []  # Store recent predictions
+HISTORY_LENGTH = 5  # Number of predictions to consider
+MIN_CONSISTENT_PREDICTIONS = 3  # Minimum number of same predictions needed
 
 while True:
     ret, frame = cap.read()
@@ -87,6 +90,7 @@ while True:
     sequence.append(keypoints)
     sequence = sequence[-30:]  # Keep only last 30 frames
     
+
     if len(sequence) == 30:
         res = predict(np.array(sequence))
         predicted_idx = np.argmax(res)
@@ -96,14 +100,22 @@ while True:
         current_time = time.time()
         time_since_last_prediction = current_time - last_prediction_time
         
+        # Add current prediction to history
+        prediction_history.append(predicted_action)
+        prediction_history = prediction_history[-HISTORY_LENGTH:]  # Keep last N predictions
+        
         if confidence > threshold:
+            # Count occurrences of current prediction in history
+            prediction_counts = prediction_history.count(predicted_action)
+            
             # Allow "nothing" to be detected anytime
             if predicted_action == "nothing":
                 prediction_text = f"Current: {predicted_action} ({confidence:.2f})"
                 last_prediction = predicted_action
                 last_prediction_time = current_time
-            # For other gestures, check the time interval
-            elif time_since_last_prediction >= min_prediction_interval:
+            # For other gestures, check time interval and consistency
+            elif (time_since_last_prediction >= min_prediction_interval and 
+                prediction_counts >= MIN_CONSISTENT_PREDICTIONS):
                 prediction_text = f"Current: {predicted_action} ({confidence:.2f})"
                 last_prediction = predicted_action
                 last_prediction_time = current_time
@@ -111,6 +123,7 @@ while True:
                     # Add to sentence if it's not already the last word
                     if not sentence or sentence[-1] != predicted_action:
                         sentence.append(predicted_action)
+                        prediction_history.clear()  # Clear history after adding to sentence
             else:
                 # Keep showing the previous prediction
                 prediction_text = f"Current: {last_prediction} ({confidence:.2f})" if last_prediction else "Waiting..."
