@@ -268,13 +268,13 @@ def asl_processing_loop():
         if mode == "ASL":
             if cap is None:
                 cap = cv2.VideoCapture(0)
-                cap.set(cv2.CAP_PROP_FRAME_WIDTH, 800)
+                cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
                 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
             ret, frame = cap.read()
             if not ret:
                 continue
             
-            frame = cv2.resize(frame, (800, 480))
+            frame = cv2.resize(frame, (640, 480))
             
             image, results = mediapipe_detection(frame, holistic)
             draw_styled_landmarks(image, results)
