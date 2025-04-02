@@ -256,6 +256,7 @@ prediction_history = []  # Store recent predictions
 
 def asl_processing_loop():
     nothing_count = 0
+    current_prediction = ""  # Add this to store current prediction
     global cap, sequence, predictions, sentence, last_detection_time, frame_count
     global start_time, latest_frame, last_prediction_time, prediction_history
 
@@ -267,18 +268,27 @@ def asl_processing_loop():
             if not ret:
                 continue
             
-            shared.latest_frame = frame.copy()
-            frame_count += 1
-            
             image, results = mediapipe_detection(frame, holistic)
             draw_styled_landmarks(image, results)
 
+            # Draw current sentence at the top
+            sentence_text = ' '.join(sentence)
+            cv2.putText(image, f"Sentence: {sentence_text}", (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+            
+            # Draw current prediction below the sentence
+            cv2.putText(image, f"Predicting: {current_prediction}", (10, 70),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+            shared.latest_frame = image.copy()  # Update this line to use the annotated image
+            frame_count += 1
+            
             keypoints = extract_keypoints(results)
             sequence.append(keypoints)
             sequence = sequence[-30:]
 
-            # Only process every 5th frame for performance
-            if len(sequence) >= 30 and frame_count % 5 == 0 and not sequence_queue.full():
+            # if len(sequence) >= 30 and frame_count % 5 == 0 and not sequence_queue.full():
+            if len(sequence) >= 30 and not sequence_queue.full():
                 sequence_queue.put_nowait(np.array(sequence[-30:]))
 
             if not result_queue.empty():
@@ -287,25 +297,25 @@ def asl_processing_loop():
                 current_time = time.time()
                 time_since_last_prediction = current_time - last_prediction_time
 
-                # Add prediction to history
+                # Update current prediction display
+                current_prediction = f"{action_name} ({confidence:.2f})"
+
                 prediction_history.append(action_name)
                 prediction_history = prediction_history[-HISTORY_LENGTH:]
 
                 if confidence > threshold:
-                    # Count occurrences in history
                     prediction_counts = prediction_history.count(action_name)
 
                     if action_name == "nothing":
                         nothing_count += 1
                         last_prediction_time = current_time
-                    # For other gestures, check time interval and consistency
                     elif (time_since_last_prediction >= min_prediction_interval and 
                           prediction_counts >= MIN_CONSISTENT_PREDICTIONS):
-                        nothing_count = 0  # Reset counter on valid gesture
+                        nothing_count = 0
                         if not sentence or action_name != sentence[-1]:
                             sentence.append(action_name)
                             last_prediction_time = current_time
-                            prediction_history.clear()  # Clear history after adding to sentence
+                            prediction_history.clear()
 
                 # Trigger synthesis on consecutive "nothing" gestures
                 if nothing_count >= 2 and any(word != "nothing" for word in sentence):
