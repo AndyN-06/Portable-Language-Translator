@@ -397,7 +397,7 @@ if __name__ == "__main__":
         pass  # clear the file contents
 
     app_qt = QApplication(sys.argv)
-    window = MainWindow(file_path)
+    window = MainWindow(file_path, translator_device)
     window.show()
     try:
         exit_code = app_qt.exec_()
