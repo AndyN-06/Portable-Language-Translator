@@ -253,6 +253,30 @@ class MainWindow(QMainWindow):
                 self.text_edit.setText(f"Error loading file: {e}")
         else:
             self.text_edit.setText("File not found.")
+    
+    def apply_settings(self):
+        """Apply the selected settings to the translator device."""
+        selected_language = self.language_combo.currentText()
+        selected_gender = self.gender_combo.currentText()
+
+        # Map the dropdown values to the respective language and gender
+        language_mapping = {
+            "English": "en-US",
+            "Spanish": "es-US",
+            "Korean": "ko-KR"
+        }
+
+        gender_mapping = {
+            "Male": "MALE",
+            "Female": "FEMALE"
+        }
+
+        base_language = language_mapping.get(selected_language, "en-US")
+        gender = gender_mapping.get(selected_gender, "MALE")
+
+        # Update the settings of the translator device
+        self.translator_device.set_settings(base_language, gender)
+        print(f"Settings updated: Language - {base_language}, Gender - {gender}")
 
 if __name__ == "__main__":
     file_path = "als_speech_audio_transcription.txt"  # This file is updated by the ASL processing thread
