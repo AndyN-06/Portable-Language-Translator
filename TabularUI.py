@@ -16,7 +16,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.file_path = filepath
-        
+        self.translator_device = translator_device
 
         self.setWindowTitle("PyQt Tab Example")
         self.setGeometry(100, 100, 800, 500)
