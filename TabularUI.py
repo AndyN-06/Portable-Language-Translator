@@ -132,11 +132,16 @@ class MainWindow(QMainWindow):
         layout.setSpacing(8)  # Reduced spacing between elements
         layout.setContentsMargins(10, 10, 10, 10)  # Minimized margins
 
-        # Volume progress bar
+        # Volume progress bar and label
+        volume_layout = QHBoxLayout()  # Horizontal layout for volume bar and label
+        self.volume_label = QLabel("Volume:")
+        self.volume_label.setAlignment(Qt.AlignCenter)
         self.volume_bar = QProgressBar(self)
         self.volume_bar.setRange(0, 90)  # Volume range 0-90%
         self.volume_bar.setValue(get_volume())  # Initial volume level
-        layout.addWidget(self.volume_bar)
+        volume_layout.addWidget(self.volume_label)
+        volume_layout.addWidget(self.volume_bar)
+        layout.addLayout(volume_layout)
 
         # Container for centering
         container = QWidget()
