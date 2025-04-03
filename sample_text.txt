@@ -1,0 +1,2 @@
+This is a sample text file.
+Modify this text to see updates in the UI.
