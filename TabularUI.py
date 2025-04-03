@@ -50,7 +50,7 @@ class MainWindow(QMainWindow):
         main_layout = QHBoxLayout()
         self.video_label = QLabel(self)
         self.video_label.setAlignment(Qt.AlignCenter)
-        self.video_label.setFixedSize(640, 480)
+        self.video_label.setFixedSize(640, 400)
         self.text_edit = QTextEdit()
         self.text_edit.setReadOnly(True)
 
