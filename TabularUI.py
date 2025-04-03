@@ -50,6 +50,7 @@ class MainWindow(QMainWindow):
         main_layout = QHBoxLayout()
         self.video_label = QLabel(self)
         self.video_label.setAlignment(Qt.AlignCenter)
+        self.video_label.setFixedSize(640, 480)
         self.text_edit = QTextEdit()
         self.text_edit.setReadOnly(True)
 
@@ -230,7 +231,7 @@ class MainWindow(QMainWindow):
             pixmap = QPixmap.fromImage(qt_image).scaled(self.video_label.width(),
                                                         self.video_label.height(),
                                                         Qt.KeepAspectRatio, # Use KeepAspectRatio
-                                                        Qt.SmoothTransformation)
+                                                        Qt.FastTransformation) # CHANGED
             self.video_label.setPixmap(pixmap)
         else:
             self.video_label.clear()
