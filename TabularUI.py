@@ -282,33 +282,42 @@ class MainWindow(QMainWindow):
             return
 
         if not hasattr(self, 'process'):
-            self.process = QProcess(self)  # Set parent to self
+            self.process = QProcess(self)
             self.process.finished.connect(self.on_connection_finished)
         
         try:
+            # Temporarily pause threads
+            shared.ui_mode = "TEXT"  # Switch to text mode while connecting
+            
             if sys.platform == "win32":
                 cmd = f'netsh wlan connect name="{ssid}"'
                 print("Executing (Windows):", cmd)
                 self.process.start('cmd.exe', ['/c', cmd])
-            elif sys.platform != "win32":
+            else:
                 cmd = f'nmcli dev wifi connect "{ssid}" password "{password}"'
                 print("Executing (Linux):", cmd)
                 self.process.start('bash', ['-c', cmd])
-            else:
-                print("This script is only for Windows or Linux (Raspberry Pi).")
-                return
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to connect: {e}")
+            # Restore previous mode
+            if hasattr(shared, 'mode'):
+                shared.ui_mode = "CAMERA" if shared.mode == "ASL" else "TEXT"
 
     def on_connection_finished(self, exit_code, exit_status):
         ssid = self.networksBox.currentText()
         if exit_code == 0:
             print(f"Successfully connected to {ssid}")
             QMessageBox.information(self, "Success", f"Successfully connected to {ssid}")
+            # Resume normal operation by restoring the previous mode
+            if hasattr(shared, 'mode'):
+                shared.ui_mode = "CAMERA" if shared.mode == "ASL" else "TEXT"
         else:
             print(f"Failed to connect to {ssid}")
             QMessageBox.critical(self, "Error", "Failed to connect to network")
+            # Restore previous mode
+            if hasattr(shared, 'mode'):
+                shared.ui_mode = "CAMERA" if shared.mode == "ASL" else "TEXT"
     # def connect_to_network(self):
     #     ssid = self.networksBox.currentText()  # Fetch the selected SSID from the ComboBox
     #     password = self.passwordInput.text().strip()

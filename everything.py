@@ -10,8 +10,8 @@ import threading
 import queue
 import os
 import sounddevice as sd
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+# from flask import Flask, request, jsonify
+# from flask_cors import CORS
 from gpiozero import Button
 from TabularUI import MainWindow
 from PyQt5.QtWidgets import QApplication, QMessageBox
@@ -105,18 +105,18 @@ asl_thread.start()
 # ==================== FLASK & TRANSLATOR SETUP ====================
 
 translator_device = TranslatorDevice()
-app = Flask(__name__)
-CORS(app)
+# app = Flask(__name__)
+# CORS(app)
 
-@app.route('/set_settings', methods=['POST'])
-def set_settings():
-    data = request.get_json()
-    base_language = data.get('baseLanguage')
-    gender = data.get('gender')
-    if not base_language or not gender:
-        return jsonify({'status': 'error', 'message': 'Invalid settings.'}), 400
-    translator_device.set_settings(base_language, gender)
-    return jsonify({'status': 'success', 'message': 'Settings updated.'}), 200
+# @app.route('/set_settings', methods=['POST'])
+# def set_settings():
+#     data = request.get_json()
+#     base_language = data.get('baseLanguage')
+#     gender = data.get('gender')
+#     if not base_language or not gender:
+#         return jsonify({'status': 'error', 'message': 'Invalid settings.'}), 400
+#     translator_device.set_settings(base_language, gender)
+#     return jsonify({'status': 'success', 'message': 'Settings updated.'}), 200
 
 def speech_mode_logic():
     """Activate speech mode."""
@@ -138,8 +138,8 @@ def asl_mode_logic():
 translator_thread = threading.Thread(target=translator_device.start, daemon=True)
 translator_thread.start()
 
-flask_thread = threading.Thread(target=lambda: app.run(host="0.0.0.0", port=5000), daemon=True)
-flask_thread.start()
+# flask_thread = threading.Thread(target=lambda: app.run(host="0.0.0.0", port=5000), daemon=True)
+# flask_thread.start()
 
 # ==================== PHYSICAL BUTTON & VOLUME SETUP ====================
 
@@ -376,7 +376,7 @@ def cleanup():
     asl_proc_thread.join()
     asl_thread.join()
     translator_thread.join()
-    flask_thread.join()
+    # flask_thread.join()
     print("Cleanup complete.")
 
 # ==================== APPLICATION ENTRY POINT ====================
