@@ -250,7 +250,7 @@ latest_frame = None
 last_prediction_time = 0
 min_prediction_interval = 0.5
 HISTORY_LENGTH = 4  # Number of predictions to consider
-MIN_CONSISTENT_PREDICTIONS = 4  # Minimum number of same predictions needed
+MIN_CONSISTENT_PREDICTIONS = 3  # Minimum number of same predictions needed
 prediction_history = []  # Store recent predictions
 
 # hands_instance = mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.8)
@@ -311,7 +311,7 @@ def asl_processing_loop():
                 if confidence > threshold:
                     prediction_counts = prediction_history.count(action_name)
 
-                    if sentence and sentence[-1] == "thank you" and action_name == "yes" and (current_time - last_prediction_time < 1.0):
+                    if sentence and sentence[-1] == "thank you" and action_name == "yes":
                         # Skip this prediction, do not update last_prediction_time or clear history.
                         pass
                     elif action_name == "nothing":
