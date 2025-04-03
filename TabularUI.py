@@ -3,7 +3,7 @@ import subprocess
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QTabWidget, QFrame,
                              QPushButton, QComboBox, QLineEdit, QMessageBox, QHBoxLayout, QTextEdit, QSizePolicy, QProgressBar)
 from PyQt5.QtGui import QFont, QImage, QPixmap
-from PyQt5.QtCore import QTimer, Qt, QFileSystemWatcher
+from PyQt5.QtCore import QTimer, Qt, QFileSystemWatcher, QTime
 from virtual_keyboard import VirtualKeyboard
 import re
 import cv2
@@ -53,29 +53,24 @@ class MainWindow(QMainWindow):
     def setupTab1(self):
         main_layout = QHBoxLayout()
 
-        # Mode label at the top left
-        from shared import mode
-        self.device_mode_label = QLabel(f"Current Mode: {mode}")  # Show the mode from shared
-        self.device_mode_label.setAlignment(Qt.AlignLeft)
-        self.device_mode_label.setStyleSheet("font-size: 12pt; font-weight: bold; color: black;")
-
+        # Create video label and text edit widget
         self.video_label = QLabel(self)
         self.video_label.setAlignment(Qt.AlignCenter)
         self.video_label.setFixedSize(640, 400)
+        
         self.text_edit = QTextEdit()
         self.text_edit.setReadOnly(True)
 
-        # Initially, show camera view only
+        # Create the status label that will be updated
+        self.status_label = QLabel(self)
+        self.status_label.setAlignment(Qt.AlignCenter)
+        self.status_label.setStyleSheet("font-size: 20pt; color: black;")
+        
+        # Initially, show camera view and text edit
         main_layout.addWidget(self.video_label)
         main_layout.addWidget(self.text_edit)
+        main_layout.addWidget(self.status_label)  # Add status label to the layout
         self.tab1.setLayout(main_layout)
-
-        # Add the mode label to the layout at the top left
-        top_layout = QVBoxLayout()
-        top_layout.addWidget(self.device_mode_label)
-        top_layout.addLayout(main_layout)
-
-        self.tab1.setLayout(top_layout)
 
         # Set up timers
         self.camera_timer = QTimer()
@@ -86,17 +81,22 @@ class MainWindow(QMainWindow):
         self.mode_timer.timeout.connect(self.update_ui_mode)
         self.mode_timer.start(500)  # Check UI mode every 500ms
 
-        self.device_mode_timer = QTimer()
-        self.device_mode_timer.timeout.connect(self.update_device_mode)
-        self.device_mode_timer.start(500)  # Check UI mode every 500ms
-
         self.file_watcher = QFileSystemWatcher()
         self.file_watcher.addPath(self.file_path)
         self.file_watcher.fileChanged.connect(self.load_text)
 
         self.text_edit.setStyleSheet("font-size: 50pt;")
-
         self.load_text()
+
+        # Set up a timer to update the status label periodically
+        self.status_timer = QTimer()
+        self.status_timer.timeout.connect(self.update_status)
+        self.status_timer.start(1000)  # Update every 1000ms (1 second)
+
+    def update_status(self):
+        # This function updates the status label's text
+        self.status_label.setText("Status updated at: " + QTime.currentTime().toString())
+
 
     def setupTab2(self):
         layout = QVBoxLayout()
@@ -150,16 +150,11 @@ class MainWindow(QMainWindow):
         layout.setSpacing(8)  # Reduced spacing between elements
         layout.setContentsMargins(10, 10, 10, 10)  # Minimized margins
 
-        # Volume progress bar and label
-        volume_layout = QHBoxLayout()  # Horizontal layout for volume bar and label
-        self.volume_label = QLabel("Volume:")
-        self.volume_label.setAlignment(Qt.AlignCenter)
+        # Volume progress bar
         self.volume_bar = QProgressBar(self)
         self.volume_bar.setRange(0, 90)  # Volume range 0-90%
         self.volume_bar.setValue(get_volume())  # Initial volume level
-        volume_layout.addWidget(self.volume_label)
-        volume_layout.addWidget(self.volume_bar)
-        layout.addLayout(volume_layout)
+        layout.addWidget(self.volume_bar)
 
         # Container for centering
         container = QWidget()
@@ -309,10 +304,6 @@ class MainWindow(QMainWindow):
         elif ui_mode == "TEXT":
             self.video_label.hide()
             self.text_edit.show()
-    
-    def update_device_mode(self):
-        from shared import mode
-        self.device_mode_label.text = mode
 
     def load_text(self):
         if os.path.exists(self.file_path):
