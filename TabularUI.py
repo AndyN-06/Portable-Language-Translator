@@ -1,7 +1,7 @@
 import sys
 import subprocess
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QTabWidget, QFrame,
-                             QPushButton, QComboBox, QLineEdit, QMessageBox, QHBoxLayout, QTextEdit, QSizePolicy)
+                             QPushButton, QComboBox, QLineEdit, QMessageBox, QHBoxLayout, QTextEdit, QSizePolicy, QProgressBar)
 from PyQt5.QtGui import QFont, QImage, QPixmap
 from PyQt5.QtCore import QTimer, Qt, QFileSystemWatcher
 from virtual_keyboard import VirtualKeyboard
@@ -10,6 +10,10 @@ import cv2
 import os
 from translator_device import TranslatorDevice  # Assuming the device code is in translator_device.py
 
+def get_volume():
+    result = os.popen("amixer -D pulse get Master").read()
+    volume = int(result.split('[')[1].split('%')[0])
+    return volume
 
 class MainWindow(QMainWindow):
     def __init__(self, filepath, translator_device):
@@ -128,6 +132,12 @@ class MainWindow(QMainWindow):
         layout.setSpacing(8)  # Reduced spacing between elements
         layout.setContentsMargins(10, 10, 10, 10)  # Minimized margins
 
+        # Volume progress bar
+        self.volume_bar = QProgressBar(self)
+        self.volume_bar.setRange(0, 90)  # Volume range 0-90%
+        self.volume_bar.setValue(get_volume())  # Initial volume level
+        layout.addWidget(self.volume_bar)
+
         # Container for centering
         container = QWidget()
         container_layout = QVBoxLayout()
@@ -177,6 +187,11 @@ class MainWindow(QMainWindow):
         # Apply layout to Tab 3
         self.tab3.setStyleSheet("background-color: #fff;")
         self.tab3.setLayout(layout)
+
+        # Timer to periodically update the volume level bar
+        self.volume_timer = QTimer(self)
+        self.volume_timer.timeout.connect(self.update_volume_bar)
+        self.volume_timer.start(1000)  # Update every second
 
 
 
@@ -282,6 +297,11 @@ class MainWindow(QMainWindow):
                 self.text_edit.setText(f"Error loading file: {e}")
         else:
             self.text_edit.setText("File not found.")
+
+    def update_volume_bar(self):
+        # Update the volume progress bar with the current volume level
+        volume = get_volume()
+        self.volume_bar.setValue(volume)  # Update the progress bar
     
     def apply_settings(self):
         """Apply the selected settings to the translator device."""
