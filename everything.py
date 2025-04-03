@@ -142,33 +142,11 @@ flask_thread.start()
 
 # ==================== PHYSICAL BUTTON & VOLUME SETUP ====================
 
-def set_volume(level):
-    # Ensure level doesn't exceed 90%
-    capped_level = min(90, max(0, level))
-    os.system(f"amixer -D pulse sset Master {capped_level}%")
-    # QMessageBox.information(None, "Volume Changed", f"Current volume: {capped_level}%")
 
-def increase_volume(step=5):
-    current = get_volume()
-    # Calculate new volume but don't exceed 90%
-    new_volume = min(90, current + step)
-    set_volume(new_volume)
-
-def decrease_volume(step=5):
-    current = get_volume()
-    # Ensure volume doesn't go below 0
-    new_volume = max(0, current - step)
-    set_volume(new_volume)
-
-def get_volume():
-    result = os.popen("amixer -D pulse get Master").read()
-    volume = int(result.split('[')[1].split('%')[0])
-    return volume
 
 # Adjust these pin numbers as needed
 PIN_MODE = 4
-PIN_UP = 17
-PIN_DOWN = 27
+
 
 # Global mode variable and camera handle (for ASL mode)
 mode = "SPEECH"  # Initial mode
@@ -220,21 +198,11 @@ def change_mode():
 
     shared.mode = mode
 
-def volume_up():
-    print("Increased Volume")
-    increase_volume()
-
-def volume_down():
-    print("Decreased Volume")
-    decrease_volume()
 
 button_mode = Button(PIN_MODE, pull_up=True, bounce_time=0.2)
-button_up = Button(PIN_UP, pull_up=True, bounce_time=0.2)
-button_down = Button(PIN_DOWN, pull_up=True, bounce_time=0.2)
 
 button_mode.when_pressed = change_mode
-button_up.when_pressed = volume_up
-button_down.when_pressed = volume_down
+
 
 # ==================== ASL PROCESSING (Non-UI) ====================
 
