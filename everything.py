@@ -249,8 +249,8 @@ start_time = time.time()
 latest_frame = None
 last_prediction_time = 0
 min_prediction_interval = 0.5
-HISTORY_LENGTH = 4  # Number of predictions to consider
-MIN_CONSISTENT_PREDICTIONS = 3  # Minimum number of same predictions needed
+HISTORY_LENGTH = 5  # Number of predictions to consider
+MIN_CONSISTENT_PREDICTIONS = 4  # Minimum number of same predictions needed
 prediction_history = []  # Store recent predictions
 
 # hands_instance = mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.8)
@@ -293,7 +293,7 @@ def asl_processing_loop():
             sequence = sequence[-30:]
 
             # if len(sequence) >= 30 and frame_count % 5 == 0 and not sequence_queue.full():
-            if len(sequence) >= 30 and frame_count % 3 == 0 and not sequence_queue.full():
+            if len(sequence) >= 30 and not sequence_queue.full():
                 sequence_queue.put_nowait(np.array(sequence[-30:]))
 
             if not result_queue.empty():
