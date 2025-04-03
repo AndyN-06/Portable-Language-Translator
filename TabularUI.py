@@ -99,7 +99,7 @@ class MainWindow(QMainWindow):
     def update_status(self):
         # This function updates the status label's text
         from shared import mode
-        self.status_label.setText(mode)
+        self.status_label.setText("mode: " + mode)
 
 
     def setupTab2(self):
