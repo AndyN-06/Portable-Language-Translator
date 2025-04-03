@@ -312,18 +312,39 @@ class MainWindow(QMainWindow):
             print(f"Successfully connected to {ssid}")
             QMessageBox.information(self, "Success", f"Successfully connected to {ssid}")
             
-            # Stop existing threads
+            # Clean up existing resources
             from everything import stop_thread, asl_thread, translator_thread, asl_proc_thread
+            from everything import button_mode, button_up, button_down
             stop_thread = True
+            
+            # Close GPIO pins
+            button_mode.close()
+            button_up.close()
+            button_down.close()
             
             # Wait for threads to finish
             asl_thread.join()
             translator_thread.join()
             asl_proc_thread.join()
             
-            # Restart threads
+            # Restart threads and GPIO
+            from everything import PIN_MODE, PIN_UP, PIN_DOWN
+            from everything import inference_worker, asl_processing_loop
+            from gpiozero import Button
+            
             stop_thread = False
-            from everything import inference_worker, asl_processing_loop, TranslatorDevice
+            
+            # Recreate buttons
+            button_mode = Button(PIN_MODE, pull_up=True, bounce_time=0.2)
+            button_up = Button(PIN_UP, pull_up=True, bounce_time=0.2)
+            button_down = Button(PIN_DOWN, pull_up=True, bounce_time=0.2)
+            
+            # Reassign button handlers
+            button_mode.when_pressed = change_mode
+            button_up.when_pressed = volume_up
+            button_down.when_pressed = volume_down
+            
+            # Restart threads
             asl_thread = threading.Thread(target=inference_worker, daemon=True)
             asl_proc_thread = threading.Thread(target=asl_processing_loop, daemon=True)
             translator_thread = threading.Thread(target=self.translator_device.start, daemon=True)
