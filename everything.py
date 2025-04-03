@@ -321,10 +321,6 @@ def asl_processing_loop():
                             sentence.append(action_name)
                             last_prediction_time = current_time
                             prediction_history.clear()
-                else:
-                    # In transition period - decrement counter
-                    transition_counter = max(0, transition_counter - 1)
-                    # Remove the last added message and keep showing current prediction
 
                 # Trigger synthesis on consecutive "nothing" gestures
                 if nothing_count >= 2 and any(word != "nothing" for word in sentence):
