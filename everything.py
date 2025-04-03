@@ -19,9 +19,6 @@ from translator_device import TranslatorDevice  # Adjust the import path as need
 from shared import latest_frame
 
 
-from button_handlers import create_buttons
-
-
 # ==================== ASL & SPEECH SETUP ====================
 actions = np.array(["hello", "thank you", "nothing", "help", "yes", "bathroom"])
 

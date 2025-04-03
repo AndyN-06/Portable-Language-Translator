@@ -11,7 +11,6 @@ import os
 from translator_device import TranslatorDevice  # Assuming the device code is in translator_device.py
 import shared
 import threading
-from button_handlers import create_buttons, volume_up, volume_down
 
 def get_volume():
     result = os.popen("amixer -D pulse get Master").read()
