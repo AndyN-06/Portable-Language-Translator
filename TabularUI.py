@@ -1,7 +1,7 @@
 import sys
 import subprocess
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QTabWidget, QFrame,
-                             QPushButton, QComboBox, QLineEdit, QMessageBox, QHBoxLayout, QTextEdit)
+                             QPushButton, QComboBox, QLineEdit, QMessageBox, QHBoxLayout, QTextEdit, QSizePolicy)
 from PyQt5.QtGui import QFont, QImage, QPixmap
 from PyQt5.QtCore import QTimer, Qt, QFileSystemWatcher
 from virtual_keyboard import VirtualKeyboard
@@ -124,35 +124,44 @@ class MainWindow(QMainWindow):
         self.scan_networks()
 
     def setupTab3(self):
-        # Layout to hold widgets
         layout = QVBoxLayout()
+        layout.setSpacing(5)  # Reduce spacing
+        layout.setContentsMargins(10, 10, 10, 10)  # Reduce margins
 
-        # Label for the language dropdown
-        self.language_label = QLabel("Select Base Language:")
-        layout.addWidget(self.language_label)
+        # Grid Layout for compact arrangement
+        grid_layout = QHBoxLayout()
 
-        # Language dropdown
+        # Language selection
+        self.language_label = QLabel("Language:")
+        self.language_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.language_combo = QComboBox(self)
         self.language_combo.addItems(["English", "Spanish", "Korean"])
-        layout.addWidget(self.language_combo)
 
-        # Label for the gender dropdown
-        self.gender_label = QLabel("Select Voice Gender:")
-        layout.addWidget(self.gender_label)
-
-        # Gender dropdown
+        # Gender selection
+        self.gender_label = QLabel("Voice:")
+        self.gender_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.gender_combo = QComboBox(self)
         self.gender_combo.addItems(["Male", "Female"])
-        layout.addWidget(self.gender_combo)
 
-        # Apply button to update settings
-        self.apply_button = QPushButton("Apply Settings", self)
+        # Arrange dropdowns and labels side by side
+        grid_layout.addWidget(self.language_label)
+        grid_layout.addWidget(self.language_combo)
+        grid_layout.addWidget(self.gender_label)
+        grid_layout.addWidget(self.gender_combo)
+
+        # Apply button
+        self.apply_button = QPushButton("Apply")
+        self.apply_button.setStyleSheet("padding: 3px; font-size: 10pt;")
         self.apply_button.clicked.connect(self.apply_settings)
-        layout.addWidget(self.apply_button)
 
-        # Set the layout
+        # Add everything to the layout
+        layout.addLayout(grid_layout)
+        layout.addWidget(self.apply_button, alignment=Qt.AlignCenter)
+
+        # Apply layout to Tab 3
         self.tab3.setStyleSheet("background-color: #fff;")
         self.tab3.setLayout(layout)
+
 
     def scan_networks(self):
         self.networksBox.clear()
