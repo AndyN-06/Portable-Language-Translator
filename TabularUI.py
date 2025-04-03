@@ -10,6 +10,7 @@ import cv2
 import os
 from translator_device import TranslatorDevice  # Assuming the device code is in translator_device.py
 import shared
+import threading
 
 def get_volume():
     result = os.popen("amixer -D pulse get Master").read()
@@ -310,12 +311,32 @@ class MainWindow(QMainWindow):
         if exit_code == 0:
             print(f"Successfully connected to {ssid}")
             QMessageBox.information(self, "Success", f"Successfully connected to {ssid}")
-            # Resume normal operation by restoring the previous mode
+            
+            # Stop existing threads
+            from everything import stop_thread, asl_thread, translator_thread, asl_proc_thread
+            stop_thread = True
+            
+            # Wait for threads to finish
+            asl_thread.join()
+            translator_thread.join()
+            asl_proc_thread.join()
+            
+            # Restart threads
+            stop_thread = False
+            from everything import inference_worker, asl_processing_loop, TranslatorDevice
+            asl_thread = threading.Thread(target=inference_worker, daemon=True)
+            asl_proc_thread = threading.Thread(target=asl_processing_loop, daemon=True)
+            translator_thread = threading.Thread(target=self.translator_device.start, daemon=True)
+            
+            asl_thread.start()
+            asl_proc_thread.start()
+            translator_thread.start()
+            
+            # Resume normal operation
             shared.ui_mode = "CAMERA" if self.previous_mode == "ASL" else "TEXT"
         else:
             print(f"Failed to connect to {ssid}")
             QMessageBox.critical(self, "Error", "Failed to connect to network")
-            # Restore previous mode
             shared.ui_mode = "CAMERA" if self.previous_mode == "ASL" else "TEXT"
     # def connect_to_network(self):
     #     ssid = self.networksBox.currentText()  # Fetch the selected SSID from the ComboBox
