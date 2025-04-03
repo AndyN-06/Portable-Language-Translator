@@ -72,7 +72,7 @@ class MainWindow(QMainWindow):
 
         # Add the mode label to the layout at the top left
         top_layout = QVBoxLayout()
-        top_layout.addWidget(self.mode_label)
+        top_layout.addWidget(self.device_mode_label)
         top_layout.addLayout(main_layout)
 
         self.tab1.setLayout(top_layout)
