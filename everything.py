@@ -314,13 +314,12 @@ def asl_processing_loop():
                         nothing_count += 1
                         last_prediction_time = current_time
                     elif (time_since_last_prediction >= min_prediction_interval and 
-                          prediction_counts >= MIN_CONSISTENT_PREDICTIONS and
-                          len(prediction_history) >= HISTORY_LENGTH):
+                        prediction_counts >= MIN_CONSISTENT_PREDICTIONS):  # Removed length check
                         nothing_count = 0
                         if not sentence or action_name != sentence[-1]:
                             sentence.append(action_name)
                             last_prediction_time = current_time
-                            prediction_history.clear()
+                            prediction_history.clear()  
 
                 # Trigger synthesis on consecutive "nothing" gestures
                 if nothing_count >= 2 and any(word != "nothing" for word in sentence):
