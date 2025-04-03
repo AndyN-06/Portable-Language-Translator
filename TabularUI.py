@@ -274,7 +274,7 @@ class MainWindow(QMainWindow):
             return []
  
     def connect_to_network(self):
-        ssid = self.networksBox.currentText()  # Fetch the selected SSID from the ComboBox
+        ssid = self.networksBox.currentText()
         password = self.passwordInput.text().strip()
 
         if not ssid:
@@ -282,43 +282,79 @@ class MainWindow(QMainWindow):
             return
 
         if not hasattr(self, 'process'):
-            self.process = QProcess()
+            self.process = QProcess(self)  # Set parent to self
             self.process.finished.connect(self.on_connection_finished)
         
         try:
-            if sys.platform == "win32":  # If Windows
-                # Use netsh command to connect to the network
+            if sys.platform == "win32":
                 cmd = f'netsh wlan connect name="{ssid}"'
-                print("Executing (Windows):", cmd)  # Debugging
-                # subprocess.run(cmd, shell=True, check=True)
+                print("Executing (Windows):", cmd)
                 self.process.start('cmd.exe', ['/c', cmd])
-
-            elif sys.platform != "win32":  # If Raspberry Pi (Linux)
-                # Use nmcli command to connect to the selected network with the password
+            elif sys.platform != "win32":
                 cmd = f'nmcli dev wifi connect "{ssid}" password "{password}"'
-                print("Executing (Linux):", cmd)  # Debugging
-                # subprocess.run(cmd, shell=True, check=True)
+                print("Executing (Linux):", cmd)
                 self.process.start('bash', ['-c', cmd])
-
             else:
                 print("This script is only for Windows or Linux (Raspberry Pi).")
                 return
-        
-            print(f"Successfully connected to {ssid}.")
-            QMessageBox.information(self, "Success", f"Successfully connected to {ssid}.")
-        
+
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to connect: {e}")
-        # except subprocess.CalledProcessError as e:
-        #     QMessageBox.critical(self, "Error", f"Failed to connect: {e}")
-        
+
     def on_connection_finished(self, exit_code, exit_status):
+        ssid = self.networksBox.currentText()
         if exit_code == 0:
-            ssid = self.networksBox.currentText()
-            print(f"Successfully connected to {ssid}.")
-            QMessageBox.information(self, "Success", f"Successfully connected to {ssid}.")
+            print(f"Successfully connected to {ssid}")
+            QMessageBox.information(self, "Success", f"Successfully connected to {ssid}")
         else:
+            print(f"Failed to connect to {ssid}")
             QMessageBox.critical(self, "Error", "Failed to connect to network")
+    # def connect_to_network(self):
+    #     ssid = self.networksBox.currentText()  # Fetch the selected SSID from the ComboBox
+    #     password = self.passwordInput.text().strip()
+
+    #     if not ssid:
+    #         QMessageBox.warning(self, "Error", "Please select a network.")
+    #         return
+
+    #     if not hasattr(self, 'process'):
+    #         self.process = QProcess()
+    #         self.process.finished.connect(self.on_connection_finished)
+        
+    #     try:
+    #         if sys.platform == "win32":  # If Windows
+    #             # Use netsh command to connect to the network
+    #             cmd = f'netsh wlan connect name="{ssid}"'
+    #             print("Executing (Windows):", cmd)  # Debugging
+    #             # subprocess.run(cmd, shell=True, check=True)
+    #             self.process.start('cmd.exe', ['/c', cmd])
+
+    #         elif sys.platform != "win32":  # If Raspberry Pi (Linux)
+    #             # Use nmcli command to connect to the selected network with the password
+    #             cmd = f'nmcli dev wifi connect "{ssid}" password "{password}"'
+    #             print("Executing (Linux):", cmd)  # Debugging
+    #             # subprocess.run(cmd, shell=True, check=True)
+    #             self.process.start('bash', ['-c', cmd])
+
+    #         else:
+    #             print("This script is only for Windows or Linux (Raspberry Pi).")
+    #             return
+        
+    #         print(f"Successfully connected to {ssid}.")
+    #         QMessageBox.information(self, "Success", f"Successfully connected to {ssid}.")
+        
+    #     except Exception as e:
+    #         QMessageBox.critical(self, "Error", f"Failed to connect: {e}")
+    #     # except subprocess.CalledProcessError as e:
+    #     #     QMessageBox.critical(self, "Error", f"Failed to connect: {e}")
+        
+    # def on_connection_finished(self, exit_code, exit_status):
+    #     if exit_code == 0:
+    #         ssid = self.networksBox.currentText()
+    #         print(f"Successfully connected to {ssid}.")
+    #         QMessageBox.information(self, "Success", f"Successfully connected to {ssid}.")
+    #     else:
+    #         QMessageBox.critical(self, "Error", "Failed to connect to network")
 
     def update_camera(self):
         from shared import latest_frame, ui_mode
