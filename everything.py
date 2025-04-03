@@ -311,7 +311,10 @@ def asl_processing_loop():
                 if confidence > threshold:
                     prediction_counts = prediction_history.count(action_name)
 
-                    if action_name == "nothing":
+                    if sentence and sentence[-1] == "thank you" and action_name == "yes" and (current_time - last_prediction_time < 1.0):
+                        # Skip this prediction, do not update last_prediction_time or clear history.
+                        pass
+                    elif action_name == "nothing":
                         nothing_count += 1
                         last_prediction_time = current_time
                     elif (time_since_last_prediction >= min_prediction_interval and 
