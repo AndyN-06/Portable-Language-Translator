@@ -146,7 +146,7 @@ def set_volume(level):
     # Ensure level doesn't exceed 90%
     capped_level = min(90, max(0, level))
     os.system(f"amixer -D pulse sset Master {capped_level}%")
-    QMessageBox.information(None, "Volume Changed", f"Current volume: {capped_level}%")
+    # QMessageBox.information(None, "Volume Changed", f"Current volume: {capped_level}%")
 
 def increase_volume(step=5):
     current = get_volume()
