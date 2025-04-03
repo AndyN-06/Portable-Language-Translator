@@ -218,7 +218,6 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Error", f"Failed to connect: {e}")
 
     def update_camera(self):
-        """Display the latest camera frame if in CAMERA mode."""
         from shared import latest_frame, ui_mode
         if ui_mode == "CAMERA" and latest_frame is not None:
             frame = latest_frame
@@ -226,9 +225,12 @@ class MainWindow(QMainWindow):
             h, w, ch = frame.shape
             bytes_per_line = ch * w
             qt_image = QImage(frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
+            # Change scaling flag from Qt.KeepAspectRatio to Qt.IgnoreAspectRatio 
+            # (or use KeepAspectRatioByExpanding) so that the image fills the label.
             pixmap = QPixmap.fromImage(qt_image).scaled(self.video_label.width(),
                                                         self.video_label.height(),
-                                                        Qt.KeepAspectRatio)
+                                                        Qt.IgnoreAspectRatio,
+                                                        Qt.SmoothTransformation)
             self.video_label.setPixmap(pixmap)
         else:
             self.video_label.clear()
