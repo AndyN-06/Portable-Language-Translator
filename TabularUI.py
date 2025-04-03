@@ -98,7 +98,8 @@ class MainWindow(QMainWindow):
 
     def update_status(self):
         # This function updates the status label's text
-        self.status_label.setText("Status updated at: " + QTime.currentTime().toString())
+        from shared import mode
+        self.status_label.setText(mode)
 
 
     def setupTab2(self):
