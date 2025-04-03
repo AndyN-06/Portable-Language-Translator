@@ -22,7 +22,7 @@ from shared import latest_frame
 actions = np.array(["hello", "thanks", "nothing", "help", "yes", "bathroom"])
 
 # Load the TFLite model
-model_path = os.path.abspath("newest.tflite")
+model_path = "/home/plt/plt_project/Portable-Language-Translator/newest.tflite"
 interpreter = tf.lite.Interpreter(model_path=model_path)
 interpreter.allocate_tensors()
 input_details = interpreter.get_input_details()
