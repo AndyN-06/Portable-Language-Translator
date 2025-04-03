@@ -161,13 +161,13 @@ class MainWindow(QMainWindow):
 
         # Apply button
         self.apply_button = QPushButton("Apply")
-        self.apply_button.setFixedSize(120, 40)  # Bigger button
+        self.apply_button.setFixedSize(100, 40)  # Bigger button
         self.apply_button.setStyleSheet("font-size: 12pt;")  # Larger text
         self.apply_button.clicked.connect(self.apply_settings)
 
         # Reduce spacing between dropdowns and button
         container_layout.addLayout(grid_layout)
-        container_layout.addSpacing(5)  # Small spacing
+        container_layout.addSpacing(20)  # Small spacing
         container_layout.addWidget(self.apply_button, alignment=Qt.AlignCenter)
 
         # Center content in the screen
