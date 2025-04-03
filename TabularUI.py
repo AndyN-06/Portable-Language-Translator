@@ -3,7 +3,7 @@ import subprocess
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QTabWidget, QFrame,
                              QPushButton, QComboBox, QLineEdit, QMessageBox, QHBoxLayout, QTextEdit, QSizePolicy, QProgressBar)
 from PyQt5.QtGui import QFont, QImage, QPixmap
-from PyQt5.QtCore import QTimer, Qt, QFileSystemWatcher, QTime
+from PyQt5.QtCore import QTimer, Qt, QFileSystemWatcher, QTime, QProcess
 from virtual_keyboard import VirtualKeyboard
 import re
 import cv2
@@ -22,7 +22,7 @@ class MainWindow(QMainWindow):
         self.file_path = filepath
         self.translator_device = translator_device
 
-        self.setWindowTitle("PyQt Tab Example")
+        # self.setWindowTitle("PyQt Tab Example")
         self.setGeometry(100, 100, 800, 500)
         
         self.initUI()
@@ -105,7 +105,7 @@ class MainWindow(QMainWindow):
     def update_status(self):
         # This function updates the status label's text
         from shared import mode
-        self.status_label.setText("mode: " + mode)
+        self.status_label.setText("Mode: " + mode)
         if mode == "SPEECH":
             self.status_label.setStyleSheet("""
             font-size: 12pt;
@@ -281,28 +281,44 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Error", "Please select a network.")
             return
 
+        if not hasattr(self, 'process'):
+            self.process = QProcess()
+            self.process.finished.connect(self.on_connection_finished)
+        
         try:
             if sys.platform == "win32":  # If Windows
                 # Use netsh command to connect to the network
                 cmd = f'netsh wlan connect name="{ssid}"'
                 print("Executing (Windows):", cmd)  # Debugging
-                subprocess.run(cmd, shell=True, check=True)
+                # subprocess.run(cmd, shell=True, check=True)
+                self.process.start('cmd.exe', ['/c', cmd])
 
             elif sys.platform != "win32":  # If Raspberry Pi (Linux)
                 # Use nmcli command to connect to the selected network with the password
                 cmd = f'nmcli dev wifi connect "{ssid}" password "{password}"'
                 print("Executing (Linux):", cmd)  # Debugging
-                subprocess.run(cmd, shell=True, check=True)
+                # subprocess.run(cmd, shell=True, check=True)
+                self.process.start('bash', ['-c', cmd])
 
             else:
                 print("This script is only for Windows or Linux (Raspberry Pi).")
                 return
-
+        
             print(f"Successfully connected to {ssid}.")
             QMessageBox.information(self, "Success", f"Successfully connected to {ssid}.")
-
-        except subprocess.CalledProcessError as e:
+        
+        except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to connect: {e}")
+        # except subprocess.CalledProcessError as e:
+        #     QMessageBox.critical(self, "Error", f"Failed to connect: {e}")
+        
+    def on_connection_finished(self, exit_code, exit_status):
+        if exit_code == 0:
+            ssid = self.networksBox.currentText()
+            print(f"Successfully connected to {ssid}.")
+            QMessageBox.information(self, "Success", f"Successfully connected to {ssid}.")
+        else:
+            QMessageBox.critical(self, "Error", "Failed to connect to network")
 
     def update_camera(self):
         from shared import latest_frame, ui_mode
