@@ -229,7 +229,7 @@ class MainWindow(QMainWindow):
             # (or use KeepAspectRatioByExpanding) so that the image fills the label.
             pixmap = QPixmap.fromImage(qt_image).scaled(self.video_label.width(),
                                                         self.video_label.height(),
-                                                        Qt.IgnoreAspectRatio,
+                                                        Qt.KeepAspectRatio, # Use KeepAspectRatio
                                                         Qt.SmoothTransformation)
             self.video_label.setPixmap(pixmap)
         else:
