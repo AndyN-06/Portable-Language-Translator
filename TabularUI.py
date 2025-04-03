@@ -51,7 +51,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.tabs)
     
     def setupTab1(self):
-        main_layout = QHBoxLayout()
+        main_layout = QVBoxLayout()  # Use QVBoxLayout for vertical stacking
 
         # Create video label and text edit widget
         self.video_label = QLabel(self)
@@ -63,13 +63,16 @@ class MainWindow(QMainWindow):
 
         # Create the status label that will be updated
         self.status_label = QLabel(self)
-        self.status_label.setAlignment(Qt.AlignCenter)
-        self.status_label.setStyleSheet("font-size: 20pt; color: black;")
-        
+        self.status_label.setAlignment(Qt.AlignLeft)  # Align to the left
+        self.status_label.setStyleSheet("font-size: 12pt; color: black;")  # Smaller font size
+
+        # Set fixed size for the status label (optional)
+        self.status_label.setFixedSize(200, 30)  # Small size for the label
+
         # Initially, show camera view and text edit
+        main_layout.addWidget(self.status_label)  # Add status label at the top of the layout
         main_layout.addWidget(self.video_label)
         main_layout.addWidget(self.text_edit)
-        main_layout.addWidget(self.status_label)  # Add status label to the layout
         self.tab1.setLayout(main_layout)
 
         # Set up timers
