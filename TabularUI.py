@@ -52,6 +52,13 @@ class MainWindow(QMainWindow):
     
     def setupTab1(self):
         main_layout = QHBoxLayout()
+
+        # Mode label at the top left
+        from shared import mode
+        self.device_mode_label = QLabel(f"Current Mode: {mode}")  # Show the mode from shared
+        self.device_mode_label.setAlignment(Qt.AlignLeft)
+        self.device_mode_label.setStyleSheet("font-size: 12pt; font-weight: bold; color: black;")
+
         self.video_label = QLabel(self)
         self.video_label.setAlignment(Qt.AlignCenter)
         self.video_label.setFixedSize(640, 400)
@@ -63,6 +70,13 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.text_edit)
         self.tab1.setLayout(main_layout)
 
+        # Add the mode label to the layout at the top left
+        top_layout = QVBoxLayout()
+        top_layout.addWidget(self.mode_label)
+        top_layout.addLayout(main_layout)
+
+        self.tab1.setLayout(top_layout)
+
         # Set up timers
         self.camera_timer = QTimer()
         self.camera_timer.timeout.connect(self.update_camera)
@@ -71,6 +85,10 @@ class MainWindow(QMainWindow):
         self.mode_timer = QTimer()
         self.mode_timer.timeout.connect(self.update_ui_mode)
         self.mode_timer.start(500)  # Check UI mode every 500ms
+
+        self.device_mode_timer = QTimer()
+        self.device_mode_timer.timeout.connect(self.update_device_mode)
+        self.device_mode_timer.start(500)  # Check UI mode every 500ms
 
         self.file_watcher = QFileSystemWatcher()
         self.file_watcher.addPath(self.file_path)
@@ -291,6 +309,10 @@ class MainWindow(QMainWindow):
         elif ui_mode == "TEXT":
             self.video_label.hide()
             self.text_edit.show()
+    
+    def update_device_mode(self):
+        from shared import mode
+        self.device_mode_label.text = mode
 
     def load_text(self):
         if os.path.exists(self.file_path):
