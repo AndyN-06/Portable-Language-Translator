@@ -293,7 +293,7 @@ def asl_processing_loop():
             sequence = sequence[-30:]
 
             # if len(sequence) >= 30 and frame_count % 5 == 0 and not sequence_queue.full():
-            if len(sequence) >= 30 and not sequence_queue.full():
+            if len(sequence) >= 30 and frame_count % 3 == 0 and not sequence_queue.full():
                 sequence_queue.put_nowait(np.array(sequence[-30:]))
 
             if not result_queue.empty():
