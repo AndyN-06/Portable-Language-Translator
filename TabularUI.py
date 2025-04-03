@@ -64,7 +64,13 @@ class MainWindow(QMainWindow):
         # Create the status label that will be updated
         self.status_label = QLabel(self)
         self.status_label.setAlignment(Qt.AlignLeft)  # Align to the left
-        self.status_label.setStyleSheet("font-size: 12pt; color: black;")  # Smaller font size
+        self.status_label.setStyleSheet("""
+        font-size: 12pt;
+        color: white;
+        background-color: green;
+        padding: 5px;
+        border-radius: 5px;
+        """)  # Style it with green background, white text, and rounded corners
 
         # Set fixed size for the status label (optional)
         self.status_label.setFixedSize(200, 30)  # Small size for the label
@@ -100,6 +106,23 @@ class MainWindow(QMainWindow):
         # This function updates the status label's text
         from shared import mode
         self.status_label.setText("mode: " + mode)
+        if mode == "SPEECH":
+            self.status_label.setStyleSheet("""
+            font-size: 12pt;
+            color: black;
+            background-color: green;
+            padding: 5px;
+            border-radius: 5px;
+            """)
+        else:
+            self.status_label.setStyleSheet("""
+            font-size: 12pt;
+            color: black;
+            background-color: red;
+            padding: 5px;
+            border-radius: 5px;
+            """)
+
 
 
     def setupTab2(self):
