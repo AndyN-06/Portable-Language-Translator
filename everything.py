@@ -17,7 +17,10 @@ from TabularUI import MainWindow
 from PyQt5.QtWidgets import QApplication, QMessageBox
 from translator_device import TranslatorDevice  # Adjust the import path as needed
 from shared import latest_frame
+
+
 from button_handlers import create_buttons
+
 
 # ==================== ASL & SPEECH SETUP ====================
 actions = np.array(["hello", "thank you", "nothing", "help", "yes", "bathroom"])
@@ -143,38 +146,6 @@ translator_thread.start()
 # flask_thread.start()
 
 # ==================== PHYSICAL BUTTON & VOLUME SETUP ====================
-
-def reset_threads():
-    global asl_thread, translator_thread, asl_proc_thread, button_mode, button_up, button_down, stop_thread
-    
-    # Close GPIO pins if they exist
-    if 'button_mode' in globals():
-        button_mode.close()
-        button_up.close()
-        button_down.close()
-    
-    # Wait for threads to finish
-    if 'asl_thread' in globals():
-        asl_thread.join()
-        translator_thread.join()
-        asl_proc_thread.join()
-    
-    # Reset stop flag
-    stop_thread = False
-    
-    # Create new buttons
-    button_mode, button_up, button_down = create_buttons(change_mode)
-    
-    # Start new threads
-    asl_thread = threading.Thread(target=inference_worker, daemon=True)
-    asl_proc_thread = threading.Thread(target=asl_processing_loop, daemon=True)
-    translator_thread = threading.Thread(target=translator_device.start, daemon=True)
-    
-    asl_thread.start()
-    asl_proc_thread.start()
-    translator_thread.start()
-    
-button_mode, button_up, button_down = create_buttons(change_mode)
     
 # def set_volume(level):
 #     # Ensure level doesn't exceed 90%
@@ -253,13 +224,45 @@ def change_mode():
 
     shared.mode = mode
 
-def volume_up():
-    print("Increased Volume")
-    increase_volume()
+def reset_threads():
+    global asl_thread, translator_thread, asl_proc_thread, button_mode, button_up, button_down, stop_thread
+    
+    # Close GPIO pins if they exist
+    if 'button_mode' in globals():
+        button_mode.close()
+        button_up.close()
+        button_down.close()
+    
+    # Wait for threads to finish
+    if 'asl_thread' in globals():
+        asl_thread.join()
+        translator_thread.join()
+        asl_proc_thread.join()
+    
+    # Reset stop flag
+    stop_thread = False
+    
+    # Create new buttons
+    button_mode, button_up, button_down = create_buttons(change_mode)
+    
+    # Start new threads
+    asl_thread = threading.Thread(target=inference_worker, daemon=True)
+    asl_proc_thread = threading.Thread(target=asl_processing_loop, daemon=True)
+    translator_thread = threading.Thread(target=translator_device.start, daemon=True)
+    
+    asl_thread.start()
+    asl_proc_thread.start()
+    translator_thread.start()
+    
+button_mode, button_up, button_down = create_buttons(change_mode)
 
-def volume_down():
-    print("Decreased Volume")
-    decrease_volume()
+# def volume_up():
+#     print("Increased Volume")
+#     increase_volume()
+
+# def volume_down():
+#     print("Decreased Volume")
+#     decrease_volume()
 
 button_mode = Button(PIN_MODE, pull_up=True, bounce_time=0.2)
 button_up = Button(PIN_UP, pull_up=True, bounce_time=0.2)
