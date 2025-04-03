@@ -19,7 +19,7 @@ from translator_device import TranslatorDevice  # Adjust the import path as need
 from shared import latest_frame
 
 # ==================== ASL & SPEECH SETUP ====================
-actions = np.array(["hello", "thanks", "nothing", "help", "yes", "bathroom"])
+actions = np.array(["hello", "thank you", "nothing", "help", "yes", "bathroom"])
 
 # Load the TFLite model
 model_path = "/home/plt/plt_project/Portable-Language-Translator/newest.tflite"
