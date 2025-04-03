@@ -14,7 +14,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from gpiozero import Button
 from TabularUI import MainWindow
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QMessageBox
 from translator_device import TranslatorDevice  # Adjust the import path as needed
 from shared import latest_frame
 
@@ -146,6 +146,7 @@ def set_volume(level):
     # Ensure level doesn't exceed 90%
     capped_level = min(90, max(0, level))
     os.system(f"amixer -D pulse sset Master {capped_level}%")
+    QMessageBox.information(None, "Volume Changed", f"Current volume: {capped_level}%")
 
 def increase_volume(step=5):
     current = get_volume()
