@@ -125,25 +125,35 @@ class MainWindow(QMainWindow):
 
     def setupTab3(self):
         layout = QVBoxLayout()
-        layout.setSpacing(5)  # Reduce spacing
-        layout.setContentsMargins(10, 10, 10, 10)  # Reduce margins
+        layout.setSpacing(8)  # Reduced spacing between elements
+        layout.setContentsMargins(10, 10, 10, 10)  # Minimized margins
+
+        # Container for centering
+        container = QWidget()
+        container_layout = QVBoxLayout()
+        container_layout.setAlignment(Qt.AlignCenter)
 
         # Grid Layout for compact arrangement
         grid_layout = QHBoxLayout()
+        grid_layout.setAlignment(Qt.AlignCenter)
 
         # Language selection
         self.language_label = QLabel("Language:")
         self.language_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        
         self.language_combo = QComboBox(self)
         self.language_combo.addItems(["English", "Spanish", "Korean"])
+        self.language_combo.setFixedWidth(100)  # Smaller dropdown width
 
         # Gender selection
         self.gender_label = QLabel("Voice:")
         self.gender_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
         self.gender_combo = QComboBox(self)
         self.gender_combo.addItems(["Male", "Female"])
+        self.gender_combo.setFixedWidth(100)  # Smaller dropdown width
 
-        # Arrange dropdowns and labels side by side
+        # Arrange dropdowns and labels in a row
         grid_layout.addWidget(self.language_label)
         grid_layout.addWidget(self.language_combo)
         grid_layout.addWidget(self.gender_label)
@@ -151,16 +161,23 @@ class MainWindow(QMainWindow):
 
         # Apply button
         self.apply_button = QPushButton("Apply")
-        self.apply_button.setStyleSheet("padding: 3px; font-size: 10pt;")
+        self.apply_button.setFixedSize(120, 40)  # Bigger button
+        self.apply_button.setStyleSheet("font-size: 12pt;")  # Larger text
         self.apply_button.clicked.connect(self.apply_settings)
 
-        # Add everything to the layout
-        layout.addLayout(grid_layout)
-        layout.addWidget(self.apply_button, alignment=Qt.AlignCenter)
+        # Reduce spacing between dropdowns and button
+        container_layout.addLayout(grid_layout)
+        container_layout.addSpacing(5)  # Small spacing
+        container_layout.addWidget(self.apply_button, alignment=Qt.AlignCenter)
+
+        # Center content in the screen
+        container.setLayout(container_layout)
+        layout.addWidget(container, alignment=Qt.AlignCenter)
 
         # Apply layout to Tab 3
         self.tab3.setStyleSheet("background-color: #fff;")
         self.tab3.setLayout(layout)
+
 
 
     def scan_networks(self):
