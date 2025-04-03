@@ -17,6 +17,7 @@ from TabularUI import MainWindow
 from PyQt5.QtWidgets import QApplication, QMessageBox
 from translator_device import TranslatorDevice  # Adjust the import path as needed
 from shared import latest_frame
+from button_handlers import create_buttons
 
 # ==================== ASL & SPEECH SETUP ====================
 actions = np.array(["hello", "thank you", "nothing", "help", "yes", "bathroom"])
@@ -143,27 +144,59 @@ translator_thread.start()
 
 # ==================== PHYSICAL BUTTON & VOLUME SETUP ====================
 
-def set_volume(level):
-    # Ensure level doesn't exceed 90%
-    capped_level = min(90, max(0, level))
-    os.system(f"amixer -D pulse sset Master {capped_level}%")
+def reset_threads():
+    global asl_thread, translator_thread, asl_proc_thread, button_mode, button_up, button_down, stop_thread
+    
+    # Close GPIO pins if they exist
+    if 'button_mode' in globals():
+        button_mode.close()
+        button_up.close()
+        button_down.close()
+    
+    # Wait for threads to finish
+    if 'asl_thread' in globals():
+        asl_thread.join()
+        translator_thread.join()
+        asl_proc_thread.join()
+    
+    # Reset stop flag
+    stop_thread = False
+    
+    # Create new buttons
+    button_mode, button_up, button_down = create_buttons(change_mode)
+    
+    # Start new threads
+    asl_thread = threading.Thread(target=inference_worker, daemon=True)
+    asl_proc_thread = threading.Thread(target=asl_processing_loop, daemon=True)
+    translator_thread = threading.Thread(target=translator_device.start, daemon=True)
+    
+    asl_thread.start()
+    asl_proc_thread.start()
+    translator_thread.start()
+    
+button_mode, button_up, button_down = create_buttons(change_mode)
+    
+# def set_volume(level):
+#     # Ensure level doesn't exceed 90%
+#     capped_level = min(90, max(0, level))
+#     os.system(f"amixer -D pulse sset Master {capped_level}%")
 
-def increase_volume(step=5):
-    current = get_volume()
-    # Calculate new volume but don't exceed 90%
-    new_volume = min(90, current + step)
-    set_volume(new_volume)
+# def increase_volume(step=5):
+#     current = get_volume()
+#     # Calculate new volume but don't exceed 90%
+#     new_volume = min(90, current + step)
+#     set_volume(new_volume)
 
-def decrease_volume(step=5):
-    current = get_volume()
-    # Ensure volume doesn't go below 0
-    new_volume = max(0, current - step)
-    set_volume(new_volume)
+# def decrease_volume(step=5):
+#     current = get_volume()
+#     # Ensure volume doesn't go below 0
+#     new_volume = max(0, current - step)
+#     set_volume(new_volume)
 
-def get_volume():
-    result = os.popen("amixer -D pulse get Master").read()
-    volume = int(result.split('[')[1].split('%')[0])
-    return volume
+# def get_volume():
+#     result = os.popen("amixer -D pulse get Master").read()
+#     volume = int(result.split('[')[1].split('%')[0])
+#     return volume
 
 # Adjust these pin numbers as needed
 PIN_MODE = 4
