@@ -248,8 +248,8 @@ start_time = time.time()
 latest_frame = None
 last_prediction_time = 0
 min_prediction_interval = 0.5
-HISTORY_LENGTH = 6  # Number of predictions to consider
-MIN_CONSISTENT_PREDICTIONS = 5  # Minimum number of same predictions needed
+HISTORY_LENGTH = 4  # Number of predictions to consider
+MIN_CONSISTENT_PREDICTIONS = 3  # Minimum number of same predictions needed
 prediction_history = []  # Store recent predictions
 
 # hands_instance = mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.8)
@@ -264,13 +264,9 @@ def asl_processing_loop():
         if mode == "ASL":
             if cap is None:
                 cap = cv2.VideoCapture(0)
-                cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
             ret, frame = cap.read()
             if not ret:
                 continue
-            
-            frame = cv2.resize(frame, (640, 480))
             
             image, results = mediapipe_detection(frame, holistic)
             draw_styled_landmarks(image, results)
