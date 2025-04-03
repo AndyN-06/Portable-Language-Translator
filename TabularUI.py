@@ -9,33 +9,6 @@ import re
 import cv2
 import os
 from translator_device import TranslatorDevice  # Assuming the device code is in translator_device.py
-from gpiozero import Button
-
-def set_volume(level):
-    # Ensure level doesn't exceed 90%
-    capped_level = min(90, max(0, level))
-    os.system(f"amixer -D pulse sset Master {capped_level}%")
-    # QMessageBox.information(None, "Volume Changed", f"Current volume: {capped_level}%")
-
-def increase_volume(step=5):
-    current = get_volume()
-    # Calculate new volume but don't exceed 90%
-    new_volume = min(90, current + step)
-    set_volume(new_volume)
-
-def decrease_volume(step=5):
-    current = get_volume()
-    # Ensure volume doesn't go below 0
-    new_volume = max(0, current - step)
-    set_volume(new_volume)
-
-def get_volume():
-    result = os.popen("amixer -D pulse get Master").read()
-    volume = int(result.split('[')[1].split('%')[0])
-    return volume
-
-PIN_UP = 17
-PIN_DOWN = 27
 
 
 class MainWindow(QMainWindow):
@@ -44,12 +17,6 @@ class MainWindow(QMainWindow):
 
         self.file_path = filepath
         self.translator_device = translator_device
-
-        button_up = Button(PIN_UP, pull_up=True, bounce_time=0.2)
-        button_down = Button(PIN_DOWN, pull_up=True, bounce_time=0.2)
-
-        button_up.when_pressed = self.volume_up
-        button_down.when_pressed = self.volume_down
 
         self.setWindowTitle("PyQt Tab Example")
         self.setGeometry(100, 100, 800, 500)
@@ -68,9 +35,9 @@ class MainWindow(QMainWindow):
         self.tab3 = QWidget()
         
         # Add tabs to the QTabWidget
-        self.tabs.addTab(self.tab1, "Home")
+        self.tabs.addTab(self.tab1, "Translation")
         self.tabs.addTab(self.tab2, "Wi-Fi")
-        self.tabs.addTab(self.tab3, "About")
+        self.tabs.addTab(self.tab3, "Settings")
         
         # Set up layouts for each tab
         self.setupTab1()
@@ -339,14 +306,6 @@ class MainWindow(QMainWindow):
         # Update the settings of the translator device
         self.translator_device.set_settings(base_language, gender)
         print(f"Settings updated: Language - {base_language}, Gender - {gender}")
-
-    def volume_up(self):
-        print("Increased Volume")
-        increase_volume()
-
-    def volume_down(self):
-        print("Decreased Volume")
-        decrease_volume()
 
 if __name__ == "__main__":
     file_path = "als_speech_audio_transcription.txt"  # This file is updated by the ASL processing thread

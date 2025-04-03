@@ -1,4 +1,3 @@
-from PyQt5.QtWidgets import QApplication, QMessageBox
+import subprocess
 
-
-QMessageBox.information(None, "Volume Changed", f"Current volume: {12}%")
+subprocess.run(["zenity", "--info", "--text=Button was clicked!"])
