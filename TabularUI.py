@@ -196,7 +196,7 @@ class MainWindow(QMainWindow):
         # Timer to periodically update the volume level bar
         self.volume_timer = QTimer(self)
         self.volume_timer.timeout.connect(self.update_volume_bar)
-        self.volume_timer.start(1000)  # Update every second
+        self.volume_timer.start(100)  # Update every second
 
 
 
