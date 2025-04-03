@@ -251,16 +251,12 @@ min_prediction_interval = 0.5
 HISTORY_LENGTH = 6  # Number of predictions to consider
 MIN_CONSISTENT_PREDICTIONS = 5  # Minimum number of same predictions needed
 prediction_history = []  # Store recent predictions
-TRANSITION_FRAMES = 15  # Add this new constant for gesture transition
-
-transition_counter = 0
 
 # hands_instance = mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.8)
 
 def asl_processing_loop():
     nothing_count = 0
     current_prediction = ""
-    transition_counter = 0  # Initialize locally
     global cap, sequence, predictions, sentence, last_detection_time, frame_count
     global start_time, latest_frame, last_prediction_time, prediction_history
 
@@ -308,33 +304,27 @@ def asl_processing_loop():
                 # Update current prediction display with more info
                 current_prediction = f"{action_name} ({confidence:.2f})"
 
-                # Only process predictions if not in transition period
-                if transition_counter == 0:
-                    prediction_history.append(action_name)
-                    prediction_history = prediction_history[-HISTORY_LENGTH:]
+                prediction_history.append(action_name)
+                prediction_history = prediction_history[-HISTORY_LENGTH:]
 
-                    if confidence > threshold:
-                        prediction_counts = prediction_history.count(action_name)
+                if confidence > threshold:
+                    prediction_counts = prediction_history.count(action_name)
 
-                        if action_name == "nothing":
-                            nothing_count += 1
+                    if action_name == "nothing":
+                        nothing_count += 1
+                        last_prediction_time = current_time
+                    elif (time_since_last_prediction >= min_prediction_interval and 
+                          prediction_counts >= MIN_CONSISTENT_PREDICTIONS and
+                          len(prediction_history) >= HISTORY_LENGTH):
+                        nothing_count = 0
+                        if not sentence or action_name != sentence[-1]:
+                            sentence.append(action_name)
                             last_prediction_time = current_time
-                        elif (time_since_last_prediction >= min_prediction_interval and 
-                              prediction_counts >= MIN_CONSISTENT_PREDICTIONS and
-                              len(prediction_history) >= HISTORY_LENGTH):  # Added check
-                            nothing_count = 0
-                            if not sentence or action_name != sentence[-1]:
-                                print(f"Adding gesture: {action_name}")  # Debug print
-                                sentence.append(action_name)
-                                last_prediction_time = current_time
-                                prediction_history.clear()  # Clear history
-                                transition_counter = TRANSITION_FRAMES  # Start transition
+                            prediction_history.clear()
                 else:
                     # In transition period - decrement counter
                     transition_counter = max(0, transition_counter - 1)
-                    # Keep showing last prediction during transition
-                    if sentence:
-                        current_prediction = f"Last added: {sentence[-1]}"
+                    # Remove the last added message and keep showing current prediction
 
                 # Trigger synthesis on consecutive "nothing" gestures
                 if nothing_count >= 2 and any(word != "nothing" for word in sentence):
