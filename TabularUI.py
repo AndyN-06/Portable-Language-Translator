@@ -9,7 +9,7 @@ import re
 import cv2
 import os
 from translator_device import TranslatorDevice  # Assuming the device code is in translator_device.py
-import everything
+import shared
 
 def get_volume():
     result = os.popen("amixer -D pulse get Master").read()
@@ -288,8 +288,8 @@ class MainWindow(QMainWindow):
         
         try:
             # Store previous mode
-            self.previous_mode = everything.mode
-            everything.ui_mode = "TEXT"  # Switch to text mode while connecting
+            self.previous_mode = shared.mode
+            shared.ui_mode = "TEXT"  # Switch to text mode while connecting
             
             if sys.platform == "win32":
                 cmd = f'netsh wlan connect name="{ssid}"'
@@ -303,7 +303,7 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to connect: {e}")
             # Restore previous mode
-            everything.ui_mode = "CAMERA" if self.previous_mode == "ASL" else "TEXT"
+            shared.ui_mode = "CAMERA" if self.previous_mode == "ASL" else "TEXT"
 
     def on_connection_finished(self, exit_code, exit_status):
         ssid = self.networksBox.currentText()
@@ -311,12 +311,12 @@ class MainWindow(QMainWindow):
             print(f"Successfully connected to {ssid}")
             QMessageBox.information(self, "Success", f"Successfully connected to {ssid}")
             # Resume normal operation by restoring the previous mode
-            everything.ui_mode = "CAMERA" if self.previous_mode == "ASL" else "TEXT"
+            shared.ui_mode = "CAMERA" if self.previous_mode == "ASL" else "TEXT"
         else:
             print(f"Failed to connect to {ssid}")
             QMessageBox.critical(self, "Error", "Failed to connect to network")
             # Restore previous mode
-            everything.ui_mode = "CAMERA" if self.previous_mode == "ASL" else "TEXT"
+            shared.ui_mode = "CAMERA" if self.previous_mode == "ASL" else "TEXT"
     # def connect_to_network(self):
     #     ssid = self.networksBox.currentText()  # Fetch the selected SSID from the ComboBox
     #     password = self.passwordInput.text().strip()
