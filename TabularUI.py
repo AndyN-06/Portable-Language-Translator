@@ -322,12 +322,15 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "Success", f"Successfully connected to {ssid}.")
             # Restart the translator device
             self.translator_device.restart()
-            # Optionally, if the translator thread has hung, restart it:
-            global translator_thread  # assuming you have a global reference
-            if translator_thread.is_alive():
-                translator_thread.join(timeout=1)  # Wait a bit for cleanup
-            translator_thread = threading.Thread(target=self.translator_device.start, daemon=True)
-            translator_thread.start()
+            # If the translator thread has hung, restart it:
+            if hasattr(self.translator_device, 'translator_thread'):
+                try:
+                    if self.translator_device.translator_thread.is_alive():
+                        self.translator_device.translator_thread.join(timeout=1)
+                except Exception as e:
+                    print(f"Error joining translator thread: {e}")
+            self.translator_device.translator_thread = threading.Thread(target=self.translator_device.start, daemon=True)
+            self.translator_device.translator_thread.start()
         else:
             QMessageBox.critical(self, "Error", "Failed to connect to network")
  

@@ -139,6 +139,7 @@ def asl_mode_logic():
 
 translator_thread = threading.Thread(target=translator_device.start, daemon=True)
 translator_thread.start()
+translator_device.translator_thread = translator_thread
 
 # flask_thread = threading.Thread(target=lambda: app.run(host="0.0.0.0", port=5000), daemon=True)
 # flask_thread.start()
