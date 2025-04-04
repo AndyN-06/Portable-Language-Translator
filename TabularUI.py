@@ -314,14 +314,30 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Error", f"Failed to connect: {e}")
         # except subprocess.CalledProcessError as e:
         #     QMessageBox.critical(self, "Error", f"Failed to connect: {e}")
-        
+
     def on_connection_finished(self, exit_code, exit_status):
         if exit_code == 0:
             ssid = self.networksBox.currentText()
             print(f"Successfully connected to {ssid}.")
             QMessageBox.information(self, "Success", f"Successfully connected to {ssid}.")
+            # Restart the translator device
+            self.translator_device.restart()
+            # Optionally, if the translator thread has hung, restart it:
+            global translator_thread  # assuming you have a global reference
+            if translator_thread.is_alive():
+                translator_thread.join(timeout=1)  # Wait a bit for cleanup
+            translator_thread = threading.Thread(target=self.translator_device.start, daemon=True)
+            translator_thread.start()
         else:
             QMessageBox.critical(self, "Error", "Failed to connect to network")
+ 
+    # def on_connection_finished(self, exit_code, exit_status):
+    #     if exit_code == 0:
+    #         ssid = self.networksBox.currentText()
+    #         print(f"Successfully connected to {ssid}.")
+    #         QMessageBox.information(self, "Success", f"Successfully connected to {ssid}.")
+    #     else:
+    #         QMessageBox.critical(self, "Error", "Failed to connect to network")
 
     def update_camera(self):
         from shared import latest_frame, ui_mode
