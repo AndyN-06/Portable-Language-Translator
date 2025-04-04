@@ -260,6 +260,7 @@ prediction_history = []  # Store recent predictions
 
 def asl_processing_loop():
     nothing_count = 0
+    current_prediction = ""
     global cap, sequence, predictions, sentence, last_detection_time, frame_count
     global start_time, latest_frame, last_prediction_time, prediction_history
 
@@ -283,7 +284,7 @@ def asl_processing_loop():
             cv2.putText(image, f"Sentence: {sentence_text}", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
             
-            # # Draw current prediction below the sentence
+            # Draw current prediction below the sentence
             # cv2.putText(image, f"Predicting: {current_prediction}", (10, 70),
             #             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
