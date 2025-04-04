@@ -465,3 +465,29 @@ class TranslatorDevice:
     def reset(self):
         self.reset_time = time.time()
         print("Translator device reset: Ignoring audio for the next 2 seconds.")
+
+    def restart(self):
+        print("Restarting translator device due to Wi‑Fi change.")
+        # Stop and close the current audio stream if active
+        if self.stream:
+            try:
+                self.stop_stream()
+                self.stream.close()
+            except Exception as e:
+                print(f"Error closing stream: {e}")
+            self.stream = None
+
+        # Reinitialize the Google Cloud clients
+        try:
+            from google.cloud import speech, texttospeech
+            from google.cloud import translate_v2 as translate
+            self.speech_client = speech.SpeechClient()
+            self.translate_client = translate.Client()
+            self.tts_client = texttospeech.TextToSpeechClient()
+            print("Google Cloud clients reinitialized.")
+        except Exception as e:
+            print(f"Error reinitializing clients: {e}")
+
+        # Restart the audio stream
+        self.start_stream()
+
