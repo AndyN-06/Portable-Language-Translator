@@ -1,3 +1,3 @@
-from translator_device import TranslatorDevice
+# from translator_device import TranslatorDevice
 
-translator_device = TranslatorDevice()
+# translator_device = TranslatorDevice()

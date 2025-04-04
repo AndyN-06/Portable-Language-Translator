@@ -8,10 +8,10 @@ from virtual_keyboard import VirtualKeyboard
 import re
 import cv2
 import os
-#from translator_device import TranslatorDevice  # Assuming the device code is in translator_device.py
+from translator_device import TranslatorDevice  # Assuming the device code is in translator_device.py
 import shared
 import threading
-from shared_translator import translator_device
+#from shared_translator import translator_device
 
 def get_volume():
     result = os.popen("amixer -D pulse get Master").read()
@@ -396,7 +396,7 @@ if __name__ == "__main__":
     with open(file_path, 'w') as file:
         pass  # clear the file contents
 
-    #translator_device = TranslatorDevice()
+    translator_device = TranslatorDevice()
     app = QApplication(sys.argv)
     window = MainWindow(file_path, translator_device)
     window.show()
