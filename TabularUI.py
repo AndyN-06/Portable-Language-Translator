@@ -35,9 +35,6 @@ class MainWindow(QMainWindow):
         main_widget = QWidget()
         main_layout = QVBoxLayout(main_widget)
         
-        # Create horizontal layout for tabs and mode
-        header_layout = QHBoxLayout()
-        
         # Create tabs
         self.tabs = QTabWidget()
         self.tabs.setStyleSheet("""QTabWidget::pane { border: 1px solid #aaa; background: #ddd; }
@@ -57,9 +54,8 @@ class MainWindow(QMainWindow):
         """)
         self.status_label.setFixedSize(120, 30)
         
-        # Add tabs and mode label to horizontal layout
-        header_layout.addWidget(self.tabs, stretch=4)
-        header_layout.addWidget(self.status_label, stretch=1)
+        # Set the mode label as the right corner widget of the tab bar
+        self.tabs.setCornerWidget(self.status_label, Qt.TopRightCorner)
         
         # Create tab widgets
         self.tab1 = QWidget()
@@ -71,8 +67,8 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.tab2, "Wi-Fi")
         self.tabs.addTab(self.tab3, "Settings")
         
-        # Add header layout to main layout
-        main_layout.addLayout(header_layout)
+        # Add tabs directly to main layout
+        main_layout.addWidget(self.tabs)
         
         # Set up tab contents
         self.setupTab1()
