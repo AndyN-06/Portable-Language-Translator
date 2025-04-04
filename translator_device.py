@@ -136,11 +136,9 @@ class TranslatorDevice:
         result = self.translate_client.translate(text, target_language=target_language)
         translated_text = html.unescape(result["translatedText"])
         return translated_text
-
+    
     def transcribe_and_translate(self, audio_bytes):
-        """Transcribe the audio, detect language, set mode, translate, and synthesize the translated text."""
         start_time = time.time()
-
         audio = speech.RecognitionAudio(content=audio_bytes)
         config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
@@ -148,8 +146,13 @@ class TranslatorDevice:
             sample_rate_hertz=self.SAMPLE_RATE,
             alternative_language_codes=[lang for lang in self.supported_languages if lang != self.base_language]
         )
-
-        response = self.speech_client.recognize(config=config, audio=audio)
+        
+        try:
+            # Optionally, add a timeout if supported (check API docs for your version)
+            response = self.speech_client.recognize(config=config, audio=audio)  # , timeout=10
+        except Exception as e:
+            print(f"Error during speech recognition: {e}")
+            return
 
         if not response.results:
             return
@@ -159,13 +162,12 @@ class TranslatorDevice:
             alternative = result.alternatives[0]
             transcript = alternative.transcript
             full_transcript += transcript + " "
-
         full_transcript = full_transcript.strip()
         print(f"Transcription result: {full_transcript}")
 
+        # Detect language and determine translation direction
         detection = self.translate_client.detect_language(full_transcript)
         detected_language = detection['language']
-
         with self.language_lock:
             if self.mode is None or (detected_language != self.base_language[:2] and detected_language != self.mode[1][:2]):
                 found_pair = None
@@ -173,31 +175,92 @@ class TranslatorDevice:
                     if pair[0][:2] == self.base_language[:2] and pair[1][:2] == detected_language:
                         found_pair = pair
                         break
-
                 if found_pair:
                     self.mode = found_pair
                 else:
                     return
-
             if detected_language == self.mode[0][:2]:
                 target_language = self.mode[1]
             else:
                 target_language = self.mode[0]
-                
-        # with open("als_speech_audio_transcription.txt", 'w') as file:
-        #     pass        
 
-        translated_text = self.translate_text(full_transcript, target_language[:2])
-        
-        print(f"Translated text: {translated_text}")
-        
+        # Translate text and print output
+        try:
+            translated_text = self.translate_text(full_transcript, target_language[:2])
+            print(f"Translated text: {translated_text}")
+        except Exception as e:
+            print(f"Error during translation: {e}")
+            return
+
         with open("als_speech_audio_transcription.txt", "w", encoding="utf-8") as f:
             f.write(translated_text)
 
         playback_start_time = time.time()
         print(f"Total time from sending audio to playback: {playback_start_time - start_time:.2f} seconds")
-
+        
         self.synthesize_speech(translated_text, target_language)
+
+    # def transcribe_and_translate(self, audio_bytes):
+    #     """Transcribe the audio, detect language, set mode, translate, and synthesize the translated text."""
+    #     start_time = time.time()
+
+    #     audio = speech.RecognitionAudio(content=audio_bytes)
+    #     config = speech.RecognitionConfig(
+    #         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+    #         language_code=self.base_language,  # Base language
+    #         sample_rate_hertz=self.SAMPLE_RATE,
+    #         alternative_language_codes=[lang for lang in self.supported_languages if lang != self.base_language]
+    #     )
+
+    #     response = self.speech_client.recognize(config=config, audio=audio)
+
+    #     if not response.results:
+    #         return
+
+    #     full_transcript = ""
+    #     for result in response.results:
+    #         alternative = result.alternatives[0]
+    #         transcript = alternative.transcript
+    #         full_transcript += transcript + " "
+
+    #     full_transcript = full_transcript.strip()
+    #     print(f"Transcription result: {full_transcript}")
+
+    #     detection = self.translate_client.detect_language(full_transcript)
+    #     detected_language = detection['language']
+
+    #     with self.language_lock:
+    #         if self.mode is None or (detected_language != self.base_language[:2] and detected_language != self.mode[1][:2]):
+    #             found_pair = None
+    #             for pair in self.lang_combos:
+    #                 if pair[0][:2] == self.base_language[:2] and pair[1][:2] == detected_language:
+    #                     found_pair = pair
+    #                     break
+
+    #             if found_pair:
+    #                 self.mode = found_pair
+    #             else:
+    #                 return
+
+    #         if detected_language == self.mode[0][:2]:
+    #             target_language = self.mode[1]
+    #         else:
+    #             target_language = self.mode[0]
+                
+    #     # with open("als_speech_audio_transcription.txt", 'w') as file:
+    #     #     pass        
+
+    #     translated_text = self.translate_text(full_transcript, target_language[:2])
+        
+    #     print(f"Translated text: {translated_text}")
+        
+    #     with open("als_speech_audio_transcription.txt", "w", encoding="utf-8") as f:
+    #         f.write(translated_text)
+
+    #     playback_start_time = time.time()
+    #     print(f"Total time from sending audio to playback: {playback_start_time - start_time:.2f} seconds")
+
+    #     self.synthesize_speech(translated_text, target_language)
 
     def get_voice_variant(self, language_code, ssml_gender):
         """Get the voice variant letter based on language code and gender."""
@@ -277,10 +340,10 @@ class TranslatorDevice:
             ]
             print(f"Settings updated: Base Language - {self.base_language}, Gender - {self.gender}")
 
+
     def start(self):
         print("Starting automatic translator device.")
         try:
-            # Start the persistent audio stream
             self.start_stream()
             print("Audio input stream opened.")
             while True:
@@ -290,7 +353,6 @@ class TranslatorDevice:
 
                 current_base_language = self.base_language
                 print(f"\nListening for speech in: {current_base_language} (Mode: {self.mode})")
-
                 frames_generator = self.vad_collector(
                     self.SAMPLE_RATE,
                     self.FRAME_DURATION,
@@ -304,16 +366,56 @@ class TranslatorDevice:
                         continue
                     if not self.active:
                         break
-                    print("Processing captured voice data...")
-                    self.transcribe_and_translate(audio_data)
+                    try:
+                        print("Processing captured voice data...")
+                        self.transcribe_and_translate(audio_data)
+                    except Exception as e:
+                        print(f"Error in processing audio data: {e}")
                     if self.base_language != current_base_language:
                         print("Base language changed during processing. Restarting listening loop.")
                         break
-
         except KeyboardInterrupt:
             print("\nExiting...")
             self.stream.close()
             sys.exit()
+
+    # def start(self):
+    #     print("Starting automatic translator device.")
+    #     try:
+    #         # Start the persistent audio stream
+    #         self.start_stream()
+    #         print("Audio input stream opened.")
+    #         while True:
+    #             if not self.active:
+    #                 time.sleep(0.1)
+    #                 continue
+
+    #             current_base_language = self.base_language
+    #             print(f"\nListening for speech in: {current_base_language} (Mode: {self.mode})")
+
+    #             frames_generator = self.vad_collector(
+    #                 self.SAMPLE_RATE,
+    #                 self.FRAME_DURATION,
+    #                 padding_duration_ms=300,
+    #                 stream=self.stream
+    #             )
+
+    #             for audio_data in frames_generator:
+    #                 if self.reset_time and time.time() < self.reset_time + 0.5:
+    #                     print("Discarding residual audio segment due to recent mode switch...")
+    #                     continue
+    #                 if not self.active:
+    #                     break
+    #                 print("Processing captured voice data...")
+    #                 self.transcribe_and_translate(audio_data)
+    #                 if self.base_language != current_base_language:
+    #                     print("Base language changed during processing. Restarting listening loop.")
+    #                     break
+
+    #     except KeyboardInterrupt:
+    #         print("\nExiting...")
+    #         self.stream.close()
+    #         sys.exit()
 
     # FOR ASL MODE
     def listen_and_save_transcription(self, file_path):
