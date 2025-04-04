@@ -320,9 +320,9 @@ class MainWindow(QMainWindow):
             ssid = self.networksBox.currentText()
             print(f"Successfully connected to {ssid}.")
             QMessageBox.information(self, "Success", f"Successfully connected to {ssid}.")
-            # Restart the translator device
+
+            # Restart the translator device:
             self.translator_device.restart()
-            # If the translator thread has hung, restart it:
             if hasattr(self.translator_device, 'translator_thread'):
                 try:
                     if self.translator_device.translator_thread.is_alive():
@@ -331,6 +331,19 @@ class MainWindow(QMainWindow):
                     print(f"Error joining translator thread: {e}")
             self.translator_device.translator_thread = threading.Thread(target=self.translator_device.start, daemon=True)
             self.translator_device.translator_thread.start()
+
+            # Restart the ASL processing thread:
+            import shared
+            from everything import asl_processing_loop  # Import the loop function from everything.py
+
+            shared.stop_asl = True  # Signal the existing ASL thread to stop
+            try:
+                shared.asl_proc_thread.join(timeout=1)
+            except Exception as e:
+                print("Error joining ASL thread: ", e)
+            shared.stop_asl = False  # Reset flag
+            shared.asl_proc_thread = threading.Thread(target=asl_processing_loop, daemon=True)
+            shared.asl_proc_thread.start()
         else:
             QMessageBox.critical(self, "Error", "Failed to connect to network")
  
