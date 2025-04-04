@@ -259,111 +259,110 @@ prediction_history = []  # Store recent predictions
 # hands_instance = mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.8)
 
 def asl_processing_loop():
-    while not shared.stop_asl:
-        nothing_count = 0
-        current_prediction = ""
-        global cap, sequence, predictions, sentence, last_detection_time, frame_count
-        global start_time, latest_frame, last_prediction_time, prediction_history
+    nothing_count = 0
+    current_prediction = ""
+    global cap, sequence, predictions, sentence, last_detection_time, frame_count
+    global start_time, latest_frame, last_prediction_time, prediction_history
 
-        while True:
-            if mode == "ASL":
-                if cap is None:
-                    cap = cv2.VideoCapture(0)
-                    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)  # Set a fixed width
-                    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 400) # Set a fixed height
-                ret, frame = cap.read()
-                if not ret:
-                    continue
-                
-                image = cv2.resize(frame, (640, 400)) # Resize the frame
-                
-                image, results = mediapipe_detection(frame, holistic)
-                draw_styled_landmarks(image, results)
+    while True:
+        if mode == "ASL":
+            if cap is None:
+                cap = cv2.VideoCapture(0)
+                cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)  # Set a fixed width
+                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 400) # Set a fixed height
+            ret, frame = cap.read()
+            if not ret:
+                continue
+            
+            image = cv2.resize(frame, (640, 400)) # Resize the frame
+            
+            image, results = mediapipe_detection(frame, holistic)
+            draw_styled_landmarks(image, results)
 
-                # Draw current sentence at the top
-                sentence_text = ' '.join(sentence)
-                cv2.putText(image, f"Sentence: {sentence_text}", (10, 30),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-                
-                # Draw current prediction below the sentence
-                # cv2.putText(image, f"Predicting: {current_prediction}", (10, 70),
-                #             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            # Draw current sentence at the top
+            sentence_text = ' '.join(sentence)
+            cv2.putText(image, f"Sentence: {sentence_text}", (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+            
+            # Draw current prediction below the sentence
+            # cv2.putText(image, f"Predicting: {current_prediction}", (10, 70),
+            #             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
-                shared.latest_frame = image.copy()  # Update this line to use the annotated image
-                frame_count += 1
-                
-                keypoints = extract_keypoints(results)
-                sequence.append(keypoints)
-                sequence = sequence[-30:]
+            shared.latest_frame = image.copy()  # Update this line to use the annotated image
+            frame_count += 1
+            
+            keypoints = extract_keypoints(results)
+            sequence.append(keypoints)
+            sequence = sequence[-30:]
 
-                # if len(sequence) >= 30 and frame_count % 2 == 0 and not sequence_queue.full():
-                if len(sequence) >= 30 and not sequence_queue.full():
-                    sequence_queue.put_nowait(np.array(sequence[-30:]))
+            # if len(sequence) >= 30 and frame_count % 2 == 0 and not sequence_queue.full():
+            if len(sequence) >= 30 and not sequence_queue.full():
+                sequence_queue.put_nowait(np.array(sequence[-30:]))
 
-                if not result_queue.empty():
-                    predicted_action, confidence = result_queue.get_nowait()
-                    action_name = actions[predicted_action]
-                    current_time = time.time()
-                    time_since_last_prediction = current_time - last_prediction_time
+            if not result_queue.empty():
+                predicted_action, confidence = result_queue.get_nowait()
+                action_name = actions[predicted_action]
+                current_time = time.time()
+                time_since_last_prediction = current_time - last_prediction_time
 
-                    # Update current prediction display with more info
-                    current_prediction = f"{action_name} ({confidence:.2f})"
+                # Update current prediction display with more info
+                current_prediction = f"{action_name} ({confidence:.2f})"
 
-                    prediction_history.append(action_name)
-                    prediction_history = prediction_history[-HISTORY_LENGTH:]
+                prediction_history.append(action_name)
+                prediction_history = prediction_history[-HISTORY_LENGTH:]
 
-                    if confidence > threshold:
-                        prediction_counts = prediction_history.count(action_name)
+                if confidence > threshold:
+                    prediction_counts = prediction_history.count(action_name)
 
-                        if sentence and sentence[-1] == "thank you" and action_name == "yes":
-                            # Skip this prediction, do not update last_prediction_time or clear history.
-                            pass
-                        elif action_name == "nothing":
-                            nothing_count += 1
-                            last_prediction_time = current_time
-                        elif (time_since_last_prediction >= min_prediction_interval and 
-                            prediction_counts >= MIN_CONSISTENT_PREDICTIONS):  # Removed length check
-                            nothing_count = 0
-                            if not sentence or action_name != sentence[-1]:
-                                sentence.append(action_name)
-                                last_prediction_time = current_time
-                                prediction_history.clear()  
-
-                    # Trigger synthesis on consecutive "nothing" gestures
-                    if nothing_count >= 2 and any(word != "nothing" for word in sentence):
-                        text_out = ' '.join(sentence)
-                        translator_device.synthesize_speech(text_out, translator_device.base_language)
-                        shared.ui_mode = "TEXT"
-
-                        # Reset all tracking variables
-                        sentence.clear()
-                        sequence.clear()
-                        predictions.clear()
-                        prediction_history.clear()
+                    if sentence and sentence[-1] == "thank you" and action_name == "yes":
+                        # Skip this prediction, do not update last_prediction_time or clear history.
+                        pass
+                    elif action_name == "nothing":
+                        nothing_count += 1
+                        last_prediction_time = current_time
+                    elif (time_since_last_prediction >= min_prediction_interval and 
+                        prediction_counts >= MIN_CONSISTENT_PREDICTIONS):  # Removed length check
                         nothing_count = 0
-                        
-                        with open(file_path, 'w') as file:
-                            pass  # Clear file contents
+                        if not sentence or action_name != sentence[-1]:
+                            sentence.append(action_name)
+                            last_prediction_time = current_time
+                            prediction_history.clear()  
 
-                        # Handle audio transcription
-                        translator_device.vad_active = True
-                        transcript = translator_device.listen_and_save_transcription(
-                            file_path="als_speech_audio_transcription.txt")
-                        translator_device.vad_active = False
+                # Trigger synthesis on consecutive "nothing" gestures
+                if nothing_count >= 2 and any(word != "nothing" for word in sentence):
+                    text_out = ' '.join(sentence)
+                    translator_device.synthesize_speech(text_out, translator_device.base_language)
+                    shared.ui_mode = "TEXT"
 
-                        time.sleep(3)
-                        with open(file_path, 'w') as file:
-                            pass
-                        shared.ui_mode = "CAMERA"
+                    # Reset all tracking variables
+                    sentence.clear()
+                    sequence.clear()
+                    predictions.clear()
+                    prediction_history.clear()
+                    nothing_count = 0
+                    
+                    with open(file_path, 'w') as file:
+                        pass  # Clear file contents
 
-                time.sleep(0.03)
-            else:
-                # Speech mode handling
-                if cap is not None:
-                    cap.release()
-                    cap = None
-                shared.ui_mode = "TEXT"
-                time.sleep(0.1)
+                    # Handle audio transcription
+                    translator_device.vad_active = True
+                    transcript = translator_device.listen_and_save_transcription(
+                        file_path="als_speech_audio_transcription.txt")
+                    translator_device.vad_active = False
+
+                    time.sleep(3)
+                    with open(file_path, 'w') as file:
+                        pass
+                    shared.ui_mode = "CAMERA"
+
+            time.sleep(0.03)
+        else:
+            # Speech mode handling
+            if cap is not None:
+                cap.release()
+                cap = None
+            shared.ui_mode = "TEXT"
+            time.sleep(0.1)
 
 asl_proc_thread = threading.Thread(target=asl_processing_loop, daemon=True)
 asl_proc_thread.start()
@@ -384,10 +383,6 @@ def cleanup():
     print("Cleanup complete.")
 
 # ==================== APPLICATION ENTRY POINT ====================
-shared.stop_asl = False
-asl_proc_thread = threading.Thread(target=asl_processing_loop, daemon=True)
-asl_proc_thread.start()
-shared.asl_proc_thread = asl_proc_thread
 
 if __name__ == "__main__":
     file_path = "als_speech_audio_transcription.txt"  # This file is updated by the ASL processing thread
