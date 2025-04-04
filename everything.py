@@ -286,8 +286,8 @@ def asl_processing_loop():
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
                 
                 # Draw current prediction below the sentence
-                cv2.putText(image, f"Predicting: {current_prediction}", (10, 70),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                # cv2.putText(image, f"Predicting: {current_prediction}", (10, 70),
+                #             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
                 shared.latest_frame = image.copy()  # Update this line to use the annotated image
                 frame_count += 1
