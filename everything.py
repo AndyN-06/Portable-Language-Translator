@@ -17,7 +17,7 @@ from TabularUI import MainWindow
 from PyQt5.QtWidgets import QApplication, QMessageBox
 from translator_device import TranslatorDevice  # Adjust the import path as needed
 from shared import latest_frame
-from shared_translator import translator_device
+#from shared_translator import translator_device
 
 
 # ==================== ASL & SPEECH SETUP ====================
@@ -106,7 +106,7 @@ asl_thread.start()
 
 # ==================== FLASK & TRANSLATOR SETUP ====================
 
-#translator_device = TranslatorDevice()
+translator_device = TranslatorDevice()
 # app = Flask(__name__)
 # CORS(app)
 
