@@ -31,63 +31,30 @@ class MainWindow(QMainWindow):
         self.initUI()
     
     def initUI(self):
-        # Create main container widget
-        main_widget = QWidget()
-        main_layout = QVBoxLayout(main_widget)
-        
-        # Create horizontal layout for tabs and mode
-        header_layout = QHBoxLayout()
-        
-        # Create tabs
         self.tabs = QTabWidget()
         self.tabs.setStyleSheet("""QTabWidget::pane { border: 1px solid #aaa; background: #ddd; }
-                                QTabBar::tab { padding: 6px; font-size: 10px; background: #eee; color: black; border: 1px solid #aaa; }
-                                QTabBar::tab:selected { background: #ccc; }""")
+                                  QTabBar::tab { padding: 6px; font-size: 10px; background: #eee; color: black; border: 1px solid #aaa; }
+                                  QTabBar::tab:selected { background: #ccc; }""")
         
-        # Create mode label
-        self.status_label = QLabel(self)
-        self.status_label.setAlignment(Qt.AlignCenter)
-        self.status_label.setStyleSheet("""
-            font-size: 12pt;
-            color: black;
-            background-color: green;
-            padding: 5px;
-            border-radius: 5px;
-            margin-left: 10px;
-        """)
-        self.status_label.setFixedSize(120, 30)
-        
-        # Add tabs and mode label to horizontal layout
-        header_layout.addWidget(self.tabs, stretch=4)
-        header_layout.addWidget(self.status_label, stretch=1)
-        
-        # Create tab widgets
+        # Create Tabs
         self.tab1 = QWidget()
         self.tab2 = QWidget()
         self.tab3 = QWidget()
         
-        # Add tabs
+        # Add tabs to the QTabWidget
         self.tabs.addTab(self.tab1, "Translation")
         self.tabs.addTab(self.tab2, "Wi-Fi")
         self.tabs.addTab(self.tab3, "Settings")
         
-        # Add header layout to main layout
-        main_layout.addLayout(header_layout)
-        
-        # Set up tab contents
+        # Set up layouts for each tab
         self.setupTab1()
         self.setupTab2()
         self.setupTab3()
         
-        # Set up status update timer
-        self.status_timer = QTimer()
-        self.status_timer.timeout.connect(self.update_status)
-        self.status_timer.start(1000)
-        
-        self.setCentralWidget(main_widget)
+        self.setCentralWidget(self.tabs)
     
     def setupTab1(self):
-        main_layout = QVBoxLayout()
+        main_layout = QVBoxLayout()  # Use QVBoxLayout for vertical stacking
 
         # Create video label and text edit widget
         self.video_label = QLabel(self)
@@ -97,7 +64,22 @@ class MainWindow(QMainWindow):
         self.text_edit = QTextEdit()
         self.text_edit.setReadOnly(True)
 
+        # Create the status label that will be updated
+        self.status_label = QLabel(self)
+        self.status_label.setAlignment(Qt.AlignLeft)  # Align to the left
+        self.status_label.setStyleSheet("""
+        font-size: 12pt;
+        color: white;
+        background-color: green;
+        padding: 5px;
+        border-radius: 5px;
+        """)  # Style it with green background, white text, and rounded corners
+
+        # Set fixed size for the status label (optional)
+        self.status_label.setFixedSize(200, 30)  # Small size for the label
+
         # Initially, show camera view and text edit
+        main_layout.addWidget(self.status_label)  # Add status label at the top of the layout
         main_layout.addWidget(self.video_label)
         main_layout.addWidget(self.text_edit)
         self.tab1.setLayout(main_layout)
@@ -105,11 +87,11 @@ class MainWindow(QMainWindow):
         # Set up timers
         self.camera_timer = QTimer()
         self.camera_timer.timeout.connect(self.update_camera)
-        self.camera_timer.start(30)
+        self.camera_timer.start(30)  # Update every 30ms
 
         self.mode_timer = QTimer()
         self.mode_timer.timeout.connect(self.update_ui_mode)
-        self.mode_timer.start(500)
+        self.mode_timer.start(500)  # Check UI mode every 500ms
 
         self.file_watcher = QFileSystemWatcher()
         self.file_watcher.addPath(self.file_path)
@@ -117,6 +99,11 @@ class MainWindow(QMainWindow):
 
         self.text_edit.setStyleSheet("font-size: 50pt;")
         self.load_text()
+
+        # Set up a timer to update the status label periodically
+        self.status_timer = QTimer()
+        self.status_timer.timeout.connect(self.update_status)
+        self.status_timer.start(1000)  # Update every 1000ms (1 second)
 
     def update_status(self):
         # This function updates the status label's text
