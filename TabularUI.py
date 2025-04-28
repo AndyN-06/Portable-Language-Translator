@@ -41,6 +41,31 @@ class MainWindow(QMainWindow):
                                 QTabBar::tab { padding: 6px; font-size: 10px; background: #eee; color: black; border: 1px solid #aaa; }
                                 QTabBar::tab:selected { background: #ccc; }""")
         
+        # Create corner widget container
+        corner_widget = QWidget()
+        corner_layout = QHBoxLayout(corner_widget)
+        corner_layout.setContentsMargins(0, 0, 0, 0)
+        corner_layout.setSpacing(5)
+
+        # Create idle button
+        self.idle_button = QPushButton("▶")
+        self.idle_button.setFixedSize(30, 30)
+        self.idle_button.setStyleSheet("""
+            QPushButton {
+                font-size: 14pt;
+                color: white;
+                background-color: #4CAF50;
+                border-radius: 15px;
+                padding: 5px;
+            }
+            QPushButton:checked {
+                background-color: #f44336;
+            }
+        """)
+        self.idle_button.setCheckable(True)
+        self.idle_button.clicked.connect(self.toggle_idle)
+        corner_layout.addWidget(self.idle_button)
+        
         # Create mode label
         self.status_label = QLabel(self)
         self.status_label.setAlignment(Qt.AlignCenter)
@@ -53,9 +78,10 @@ class MainWindow(QMainWindow):
             margin-left: 10px;
         """)
         self.status_label.setFixedSize(120, 30)
+        corner_layout.addWidget(self.status_label)
         
-        # Set the mode label as the right corner widget of the tab bar
-        self.tabs.setCornerWidget(self.status_label, Qt.TopRightCorner)
+        # Set the corner widget
+        self.tabs.setCornerWidget(corner_widget, Qt.TopRightCorner)
         
         # Create tab widgets
         self.tab1 = QWidget()
