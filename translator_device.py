@@ -20,7 +20,7 @@ import html
 
 # Set your environment variable for Google Cloud credentials
 # os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/home/plt/Desktop/optimum-reactor-449320-e8-dcb220f309a5.json'
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/home/plt/optimum-reactor-449320-e8-dcb220f309a5.json'
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/home/plt/core-theme-458522-c4-664d42ef5d50.json'
 # os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "C:\\Users\\yohan\\Desktop\\optimum-reactor-449320-e8-dcb220f309a5.json"
 
 class TranslatorDevice:
