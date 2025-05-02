@@ -398,43 +398,6 @@ class TranslatorDevice:
             self.stream.close()
             sys.exit()
 
-    # def start(self):
-    #     print("Starting automatic translator device.")
-    #     try:
-    #         # Start the persistent audio stream
-    #         self.start_stream()
-    #         print("Audio input stream opened.")
-    #         while True:
-    #             if not self.active:
-    #                 time.sleep(0.1)
-    #                 continue
-
-    #             current_base_language = self.base_language
-    #             print(f"\nListening for speech in: {current_base_language} (Mode: {self.mode})")
-
-    #             frames_generator = self.vad_collector(
-    #                 self.SAMPLE_RATE,
-    #                 self.FRAME_DURATION,
-    #                 padding_duration_ms=300,
-    #                 stream=self.stream
-    #             )
-
-    #             for audio_data in frames_generator:
-    #                 if self.reset_time and time.time() < self.reset_time + 0.5:
-    #                     print("Discarding residual audio segment due to recent mode switch...")
-    #                     continue
-    #                 if not self.active:
-    #                     break
-    #                 print("Processing captured voice data...")
-    #                 self.transcribe_and_translate(audio_data)
-    #                 if self.base_language != current_base_language:
-    #                     print("Base language changed during processing. Restarting listening loop.")
-    #                     break
-
-    #     except KeyboardInterrupt:
-    #         print("\nExiting...")
-    #         self.stream.close()
-    #         sys.exit()
 
     # FOR ASL MODE
     def listen_and_save_transcription(self, file_path):
@@ -442,44 +405,51 @@ class TranslatorDevice:
         transcribe the audio for the base language, save the transcript to file, and return the transcript."""
         print("Listening for a voice utterance...")
         with sd.InputStream(samplerate=self.SAMPLE_RATE, channels=self.NUM_CHANNELS, dtype='int16') as stream:
-            for audio_bytes in self.vad_collector(
-                    self.SAMPLE_RATE,
-                    self.FRAME_DURATION,
-                    padding_duration_ms=300,
-                    stream=stream):
-                print("Processing captured voice data...")
-                if len(audio_bytes) < 1000:
-                    print("Audio segment too short, ignoring...")
-                    continue
+            # Get audio data with timeout
+            audio_bytes = self.vad_collector(
+                self.SAMPLE_RATE,
+                self.FRAME_DURATION,
+                padding_duration_ms=300,
+                stream=stream,
+                timeout_seconds=3.0  # Set timeout to 3 seconds
+            )
+            
+            if audio_bytes is None:
+                print("No speech detected in timeout period")
+                return None
+                
+            if len(audio_bytes) < 1000:
+                print("Audio segment too short, ignoring...")
+                return None
 
-                audio = speech.RecognitionAudio(content=audio_bytes)
-                config = speech.RecognitionConfig(
-                    encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-                    language_code=self.base_language,
-                    sample_rate_hertz=self.SAMPLE_RATE
-                )
-                try:
-                    response = self.speech_client.recognize(config=config, audio=audio)
-                    transcript = " ".join(
-                        [result.alternatives[0].transcript for result in response.results]
-                    ).strip()
-                    if not transcript:
-                        print("No speech detected in this segment, waiting for valid input...")
-                        continue
-                    print(f"Transcription recorded: {transcript}")
-                except Exception as e:
-                    transcript = ""
-                    print(f"Error transcribing audio: {e}")
-                    continue
+            audio = speech.RecognitionAudio(content=audio_bytes)
+            config = speech.RecognitionConfig(
+                encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+                language_code=self.base_language,
+                sample_rate_hertz=self.SAMPLE_RATE
+            )
+            try:
+                response = self.speech_client.recognize(config=config, audio=audio)
+                transcript = " ".join(
+                    [result.alternatives[0].transcript for result in response.results]
+                ).strip()
+                if not transcript:
+                    print("No speech detected in this segment, waiting for valid input...")
+                    return None
+                print(f"Transcription recorded: {transcript}")
+            except Exception as e:
+                transcript = ""
+                print(f"Error transcribing audio: {e}")
+                return None
 
-                try:
-                    with open(file_path, "w", encoding="utf-8") as f:
-                        f.write(transcript)
-                    print(f"Transcription saved to {file_path}")
-                except Exception as e:
-                    print(f"Error writing transcription to file: {e}")
+            try:
+                with open(file_path, "w", encoding="utf-8") as f:
+                    f.write(transcript)
+                print(f"Transcription saved to {file_path}")
+            except Exception as e:
+                print(f"Error writing transcription to file: {e}")
 
-                return transcript
+            return transcript
 
     def reset(self):
         self.reset_time = time.time()
