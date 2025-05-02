@@ -153,7 +153,7 @@ def set_volume(level):
 
 def increase_volume(step=5):
     current = get_volume()
-    # Calculate new volume but don't exceed 90%
+    # Calculate new volume but don't exceed 90% 
     new_volume = min(90, current + step)
     set_volume(new_volume)
 
