@@ -364,13 +364,13 @@ class TranslatorDevice:
                 print(f"\nListening for speech in: {current_base_language} (Mode: {self.mode})")
                 
                 # Get audio data with timeout
-                audio_data = next(self.vad_collector(
+                audio_data = self.vad_collector(
                     self.SAMPLE_RATE,
                     self.FRAME_DURATION,
                     padding_duration_ms=300,
                     stream=self.stream,
                     timeout_seconds=3.0  # Set timeout to 3 seconds
-                ), None)
+                )
 
                 if audio_data is None:
                     print("No speech detected in timeout period, continuing...")
