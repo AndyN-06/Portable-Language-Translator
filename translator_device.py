@@ -95,15 +95,26 @@ class TranslatorDevice:
             print(f"Error reading audio: {e}")
             return None
 
-    def vad_collector(self, sample_rate, frame_duration_ms, padding_duration_ms, stream):
-        """Yield segments of audio where speech is detected."""
+    def vad_collector(self, sample_rate, frame_duration_ms, padding_duration_ms, stream, timeout_seconds=3.0):
+        """Yield segments of audio where speech is detected, with a timeout."""
         num_padding_frames = int(padding_duration_ms / frame_duration_ms)
         ring_buffer = collections.deque(maxlen=num_padding_frames)
         triggered = False
         voiced_frames = []
+        
+        start_time = time.time()
 
         while True:
-            # If the device is paused, break out of this generator.
+            # Check if we've exceeded the timeout
+            if time.time() - start_time > timeout_seconds:
+                if voiced_frames:  # If we have collected any voice data, return it
+                    print("Timeout reached - processing collected audio")
+                    return b''.join([f.tobytes() for f in voiced_frames])
+                else:
+                    print("Timeout reached - no speech detected")
+                    return None
+
+            # If the device is paused, break out of this generator
             if not self.vad_active:
                 break
 
@@ -125,10 +136,7 @@ class TranslatorDevice:
                 if triggered:
                     ring_buffer.append(audio)
                     if len(ring_buffer) >= ring_buffer.maxlen:
-                        yield b''.join([f.tobytes() for f in voiced_frames])
-                        triggered = False
-                        voiced_frames = []
-                        ring_buffer.clear()
+                        return b''.join([f.tobytes() for f in voiced_frames])
                 else:
                     continue  # Remain in silence until voice is detected
 
@@ -354,27 +362,37 @@ class TranslatorDevice:
 
                 current_base_language = self.base_language
                 print(f"\nListening for speech in: {current_base_language} (Mode: {self.mode})")
-                frames_generator = self.vad_collector(
+                
+                # Get audio data with timeout
+                audio_data = next(self.vad_collector(
                     self.SAMPLE_RATE,
                     self.FRAME_DURATION,
                     padding_duration_ms=300,
-                    stream=self.stream
-                )
+                    stream=self.stream,
+                    timeout_seconds=3.0  # Set timeout to 3 seconds
+                ), None)
 
-                for audio_data in frames_generator:
-                    if self.reset_time and time.time() < self.reset_time + 0.5:
-                        print("Discarding residual audio segment due to recent mode switch...")
-                        continue
-                    if not self.active:
-                        break
-                    try:
-                        print("Processing captured voice data...")
-                        self.transcribe_and_translate(audio_data)
-                    except Exception as e:
-                        print(f"Error in processing audio data: {e}")
-                    if self.base_language != current_base_language:
-                        print("Base language changed during processing. Restarting listening loop.")
-                        break
+                if audio_data is None:
+                    print("No speech detected in timeout period, continuing...")
+                    continue
+
+                if self.reset_time and time.time() < self.reset_time + 0.5:
+                    print("Discarding residual audio segment due to recent mode switch...")
+                    continue
+                    
+                if not self.active:
+                    break
+                    
+                try:
+                    print("Processing captured voice data...")
+                    self.transcribe_and_translate(audio_data)
+                except Exception as e:
+                    print(f"Error in processing audio data: {e}")
+                    
+                if self.base_language != current_base_language:
+                    print("Base language changed during processing. Restarting listening loop.")
+                    break
+                    
         except KeyboardInterrupt:
             print("\nExiting...")
             self.stream.close()
