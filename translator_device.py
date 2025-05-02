@@ -286,6 +286,10 @@ class TranslatorDevice:
                 texttospeech.SsmlVoiceGender.FEMALE: 'B',
                 texttospeech.SsmlVoiceGender.MALE: 'C',
             },
+            'ar-XA': {
+                texttospeech.SsmlVoiceGender.FEMALE: 'A',
+                texttospeech.SsmlVoiceGender.MALE: 'B',
+            },
         }
         variant = voice_variants.get(language_code, {}).get(ssml_gender)
         if variant:
